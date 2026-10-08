@@ -1,0 +1,21 @@
+{
+  "_comment": "רשימת האתרים. ניתן לערוך קובץ זה (עותק בשם sites.json ליד קובץ ה-EXE גובר על המובנה). שדות אופציונליים לכל אתר: plate_selector, date_selector, submit_selector, pre_click (רשימת סלקטורים ללחיצה לפני המילוי), date_format (dd/mm/yyyy | yyyy-mm-dd | dd.mm.yyyy | ddmmyyyy), positive / negative (ביטויים נוספים לזיהוי תשובה), enabled.",
+  "sites": [
+    {"id": "migdal",   "company": "מגדל",            "url": "https://www.migdal.co.il/car-insurance/support/third-party-policy-examination"},
+    {"id": "direct",   "company": "ביטוח ישיר",       "url": "https://www.555.co.il/webapp/~v76/agentstatus/agentstatus.html"},
+    {"id": "ayalon",   "company": "איילון",           "url": "https://www.ayalon-ins.co.il/third_party/"},
+    {"id": "bth",      "company": "ביטוח חקלאי",      "url": "https://www.bth.co.il/check-insurance/"},
+    {"id": "hachshara","company": "הכשרה",            "url": "https://www.hcsra.co.il/Pages/covercheckthirdparty.aspx"},
+    {"id": "clal",     "company": "כלל",              "url": "https://www.clalbit.co.il/influence/"},
+    {"id": "menora",   "company": "מנורה מבטחים",     "url": "https://www.menoramivt.co.il/car-insurance-validity/"},
+    {"id": "shlomo",   "company": "שלמה ביטוח",       "url": "https://www.shlomo-bit.co.il/policy_status"},
+    {"id": "fnx",      "company": "הפניקס",           "url": "https://www.fnx.co.il/claims-customer-service/claims-car-insurance/vehicle-third-party-all/"},
+    {"id": "libra",    "company": "ליברה",            "url": "https://www.lbr.co.il/%D7%A9%D7%99%D7%A8%D7%95%D7%AA-%D7%95%D7%AA%D7%91%D7%99%D7%A2%D7%95%D7%AA/%D7%91%D7%93%D7%99%D7%A7%D7%AA-%D7%9B%D7%99%D7%A1%D7%95%D7%99-%D7%A6%D7%93-%D7%92/"},
+    {"id": "kesh",     "company": "קש ביטוח",         "url": "https://user.kesh-ins.co.il/Check_insurance"},
+    {"id": "wesure",   "company": "WeSure",           "url": "https://we-sure.co.il/%d7%91%d7%93%d7%99%d7%a7%d7%aa-%d7%aa%d7%95%d7%a7%d7%a3-%d7%94%d7%91%d7%99%d7%98%d7%95%d7%97/"},
+    {"id": "nkr",      "company": "NKR",              "url": "https://www.nkr.co.il/having-insurance/"},
+    {"id": "harel",    "company": "הראל",             "url": "https://www.harel-group.co.il/Insurance/car/information/calculators/Pages/status-third-party-claim.aspx"},
+    {"id": "aig",      "company": "AIG",              "url": "https://services.aig.co.il/thirdparty/login"},
+    {"id": "fnx2",     "company": "הפניקס (פורטל צד ג')", "url": "https://thirdpartyclaim.fnx.co.il/coverage-check/at-fault-details"}
+  ]
+}
