@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>אנקור – בדיקת כיסוי צד ג'</title>
+<style>
+  :root {
+    --brand: #709FD3; --brand-dark: #4E7FB8; --brand-soft: #EAF2FB;
+    --bg: #F4F7FB; --card: #FFFFFF; --text: #1E2A3A; --muted: #6B7A8C; --line: #DDE5EF;
+    --ok: #1F9D55; --ok-bg: #E6F6EC; --no: #8A96A6; --no-bg: #F0F2F5;
+    --warn: #C77800; --warn-bg: #FFF4E0; --err: #D14343; --err-bg: #FDECEC;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", "Arial Hebrew", Arial, sans-serif; background: var(--bg); color: var(--text); }
+  header { background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff;
+           padding: 18px 28px; display: flex; align-items: center; gap: 18px; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+  header img { width: 66px; height: 66px; border-radius: 16px; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+  header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+  header p { margin: 2px 0 0; opacity: .9; font-size: 14px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 22px; }
+  .panel { background: var(--card); border-radius: 16px; padding: 20px 22px; box-shadow: 0 1px 4px rgba(30,42,58,.08); }
+  form { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
+  label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px; }
+  input { font: inherit; font-size: 18px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 10px; min-width: 220px; }
+  input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  #plate { letter-spacing: 2px; direction: ltr; text-align: center; font-weight: 700; }
+  button { font: inherit; cursor: pointer; border: 0; border-radius: 10px; }
+  .primary { background: var(--brand); color: #fff; font-size: 17px; font-weight: 700; padding: 12px 30px; }
+  .primary:hover { background: var(--brand-dark); }
+  .primary:disabled { background: #B8CBE2; cursor: default; }
+  .ghost { background: var(--brand-soft); color: var(--brand-dark); padding: 10px 16px; font-weight: 600; }
+  .actions { margin-inline-start: auto; display: flex; gap: 10px; }
+  #summary { margin: 18px 0 0; padding: 16px 20px; border-radius: 14px; font-size: 18px; font-weight: 700; display: none; }
+  #summary.ok { display: block; background: var(--ok-bg); color: var(--ok); border: 1.5px solid #BFE6CD; }
+  #summary.none { display: block; background: var(--no-bg); color: #4A5564; border: 1.5px solid var(--line); }
+  #summary.run { display: block; background: var(--brand-soft); color: var(--brand-dark); border: 1.5px solid #CFE0F3; }
+  .progress { height: 6px; background: var(--line); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+  .progress div { height: 100%; width: 0; background: var(--brand); transition: width .3s; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; margin-top: 18px; }
+  .card { background: var(--card); border-radius: 14px; padding: 14px 16px; border: 1.5px solid var(--line);
+          display: flex; flex-direction: column; gap: 8px; min-height: 120px; transition: border-color .2s, background .2s; }
+  .card .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .card h3 { margin: 0; font-size: 17px; }
+  .chip { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; background: var(--no-bg); color: var(--muted); }
+  .msg { font-size: 13px; color: var(--muted); line-height: 1.45; flex: 1; }
+  .card .links { display: flex; gap: 8px; }
+  .card .links button { font-size: 12px; padding: 5px 10px; background: var(--bg); color: var(--brand-dark); font-weight: 600; }
+  .s-running .chip { background: var(--brand-soft); color: var(--brand-dark); }
+  .s-found { border-color: var(--ok); background: var(--ok-bg); }
+  .s-found .chip { background: var(--ok); color: #fff; }
+  .s-not_found .chip { background: var(--no-bg); color: var(--no); }
+  .s-needs_user, .s-unknown { border-color: #F2C77A; }
+  .s-needs_user .chip, .s-unknown .chip { background: var(--warn-bg); color: var(--warn); }
+  .s-error .chip { background: var(--err-bg); color: var(--err); }
+  .s-running .chip::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-inline-end: 6px;
+    border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 18px; }
+  .err { color: var(--err); font-size: 14px; margin-top: 10px; min-height: 18px; }
+</style>
+</head>
+<body>
+<header>
+  <img src="__LOGO__" alt="אנקור">
+  <div>
+    <h1>בדיקת כיסוי ביטוחי – צד ג'</h1>
+    <p>הזינו מספר רישוי ותאריך אירוע – המערכת תבדוק את כל חברות הביטוח במקביל</p>
+  </div>
+</header>
+<main>
+  <section class="panel">
+    <form id="f">
+      <label>מספר רישוי
+        <input id="plate" inputmode="numeric" maxlength="10" placeholder="12-345-67" autofocus required>
+      </label>
+      <label>תאריך האירוע
+        <input id="date" type="date" required>
+      </label>
+      <button class="primary" id="go" type="submit">🔍 בדוק בכל החברות</button>
+      <div class="actions">
+        <button type="button" class="ghost" id="stop" disabled>עצור</button>
+        <button type="button" class="ghost" id="folder">📁 תיקיית תוצאות</button>
+      </div>
+    </form>
+    <div class="err" id="err"></div>
+    <div id="summary"></div>
+    <div class="progress"><div id="bar"></div></div>
+  </section>
+  <section class="grid" id="grid"></section>
+</main>
+<footer>Ankor · חברה לביטוח · צילומי מסך וקובץ סיכום נשמרים בתיקיית "תוצאות" ליד התוכנה</footer>
+<script>
+const $ = id => document.getElementById(id);
+const DONE = ['found', 'not_found', 'unknown', 'error', 'skipped'];
+let sites = [], state = {};
+
+function card(s) {
+  const el = document.createElement('div');
+  el.className = 'card s-pending'; el.id = 'c-' + s.id;
+  el.innerHTML = `<div class="top"><h3></h3><span class="chip">ממתין</span></div>
+    <div class="msg"></div>
+    <div class="links"><button data-a="show">הצג באתר</button><button data-a="shot" hidden>צילום מסך</button></div>`;
+  el.querySelector('h3').textContent = s.company;
+  el.querySelector('[data-a=show]').onclick = () => pywebview.api.show(s.id);
+  el.querySelector('[data-a=shot]').onclick = () => pywebview.api.open_file(state[s.id].detail);
+  return el;
+}
+
+function render() {
+  $('grid').replaceChildren(...sites.map(card));
+}
+
+window.onUpdate = u => {
+  state[u.id] = u;
+  const el = $('c-' + u.id); if (!el) return;
+  el.className = 'card s-' + u.status;
+  if (u.status === 'found') el.parentNode.prepend(el);
+  el.querySelector('.chip').textContent = (u.status === 'found' ? '✔ ' : '') + u.status_he;
+  el.querySelector('.msg').textContent = u.message || '';
+  el.querySelector('[data-a=shot]').hidden = !(u.detail && /\.png$/i.test(u.detail));
+  summary();
+};
+
+function summary() {
+  const vals = Object.values(state), done = vals.filter(v => DONE.includes(v.status)).length;
+  $('bar').style.width = (sites.length ? 100 * done / sites.length : 0) + '%';
+  const found = vals.filter(v => v.status === 'found').map(v => v.company);
+  const pending = vals.filter(v => v.status === 'needs_user').map(v => v.company);
+  const s = $('summary');
+  if (found.length) { s.className = 'ok'; s.textContent = '✔ נמצא כיסוי: ' + found.join(', '); }
+  else if (done < sites.length) { s.className = 'run';
+    s.textContent = `בודק... ${done}/${sites.length}` + (pending.length ? ` · ממתין לפעולה שלך ב: ${pending.join(', ')}` : ''); }
+  else { s.className = 'none'; s.textContent = 'לא נמצא כיסוי באף חברה שנבדקה אוטומטית – בדקו את הכרטיסים המסומנים בכתום.'; }
+  if (done >= sites.length) { $('go').disabled = false; }
+}
+
+window.onFatal = msg => { $('err').textContent = msg; $('go').disabled = false; $('stop').disabled = true; };
+
+$('f').onsubmit = async e => {
+  e.preventDefault();
+  $('err').textContent = '';
+  const plate = $('plate').value.replace(/\D/g, '');
+  if (plate.length < 5 || plate.length > 8) { $('err').textContent = 'מספר רישוי חייב להכיל 5–8 ספרות'; return; }
+  if (!$('date').value) { $('err').textContent = 'יש לבחור תאריך אירוע'; return; }
+  state = {}; render(); $('go').disabled = true; $('stop').disabled = false;
+  const r = await pywebview.api.start(plate, $('date').value);
+  if (r && r.error) onFatal(r.error);
+};
+$('stop').onclick = () => { pywebview.api.stop(); $('stop').disabled = true; $('go').disabled = false; };
+$('folder').onclick = () => pywebview.api.open_results();
+$('date').max = new Date().toISOString().slice(0, 10);
+
+window.addEventListener('pywebviewready', async () => { sites = await pywebview.api.sites(); render(); });
+</script>
+</body>
+</html>

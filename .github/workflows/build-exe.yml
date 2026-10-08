@@ -1,0 +1,50 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ "claude/car-insurance-checker-mfk9d4", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build EXE
+        run: >
+          pyinstaller --noconfirm --onefile --windowed
+          --name AnkorInsuranceCheck
+          --icon assets/icon.ico
+          --paths app
+          --add-data "app/sites.json;app"
+          --add-data "app/ui/index.html;app/ui"
+          --add-data "assets/logo.png;assets"
+          --collect-data playwright
+          app/main.py
+
+      - name: Self-test the EXE (Playwright driver + Edge)
+        shell: pwsh
+        run: |
+          $p = Start-Process dist/AnkorInsuranceCheck.exe -ArgumentList "--selftest" -Wait -PassThru
+          Get-Content dist/selftest.txt
+          if ($p.ExitCode -ne 0) { exit 1 }
+          Remove-Item dist/selftest.txt
+
+      - name: Package
+        shell: pwsh
+        run: |
+          Copy-Item app/sites.json dist/sites.json
+          Compress-Archive -Path dist/* -DestinationPath AnkorInsuranceCheck.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AnkorInsuranceCheck
+          path: AnkorInsuranceCheck.zip
