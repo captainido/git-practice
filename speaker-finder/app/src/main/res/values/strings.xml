@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">מאתר רמקולים</string>
+    <string name="scan_start">סרוק</string>
+    <string name="scan_stop">עצור סריקה</string>
+    <string name="speakers_only">רמקולים בלבד</string>
+    <string name="scanning">סורק… (Classic + BLE)</string>
+    <string name="idle">לחץ \"סרוק\" כדי לחפש רמקולים בסביבה</string>
+    <string name="no_devices">לא נמצאו מכשירים עדיין. ודא שהרמקול במצב צימוד (לחיצה ארוכה על כפתור ה-Bluetooth ב-JBL).</string>
+    <string name="connect">התחבר</string>
+    <string name="connected">מחובר ✓</string>
+    <string name="disconnect">נתק</string>
+    <string name="open_bt_settings">פתח הגדרות Bluetooth</string>
+    <string name="grant_permissions">אשר הרשאות Bluetooth</string>
+    <string name="permissions_needed">האפליקציה צריכה הרשאת Bluetooth כדי לחפש ולהתחבר לרמקולים.</string>
+    <string name="bt_off">ה-Bluetooth כבוי</string>
+    <string name="enable_bt">הפעל Bluetooth</string>
+    <string name="location_off">במכשירים עם Android 11 ומטה יש להפעיל שירותי מיקום כדי שהסריקה תמצא מכשירים.</string>
+    <string name="no_bt">המכשיר הזה לא תומך ב-Bluetooth.</string>
+    <string name="caps_title">יכולות הטלפון שלך</string>
+    <string name="cap_coded">טווח ארוך (BLE Coded PHY)</string>
+    <string name="cap_ext_adv">פרסום מורחב (BLE 5)</string>
+    <string name="yes">כן</string>
+    <string name="no">לא</string>
+    <string name="range_note">הטווח נקבע ע\"י החומרה של הרמקול והטלפון. שמע ברמקולים כמו JBL עובר ב-Bluetooth Classic (בד\"כ 10–30 מ\' בשטח פתוח). האפליקציה סורקת בכל המצבים שהטלפון תומך בהם – כולל טווח ארוך כשקיים.</string>
+    <string name="tag_classic">Classic</string>
+    <string name="tag_ble">BLE</string>
+    <string name="tag_long_range">טווח ארוך</string>
+    <string name="tag_paired">מצומד</string>
+    <string name="tag_audio">שמע</string>
+    <string name="unknown_device">מכשיר ללא שם</string>
+    <string name="distance_estimate">~%1$s מ\' (הערכה)</string>
+    <string name="status_pairing">מצמד עם %1$s… אשר את הבקשה אם מופיעה</string>
+    <string name="status_connecting">מתחבר ל-%1$s…</string>
+    <string name="status_connected">מחובר ל-%1$s – אפשר לנגן!</string>
+    <string name="status_pair_failed">הצימוד עם %1$s נכשל. ודא שהרמקול במצב צימוד ונסה שוב.</string>
+    <string name="status_paired_only">%1$s מצומד. אם השמע לא עבר אוטומטית – פתח את הגדרות ה-Bluetooth והקש על הרמקול.</string>
+    <string name="status_disconnected">%1$s התנתק</string>
+</resources>
