@@ -16,8 +16,8 @@
 מה שהאפליקציה כן עושה: סורקת בכל המצבים שהחומרה תומכת בהם, ומראה לך את עוצמת האות כדי למקם את הטלפון נכון.
 
 ## התקנה
-1. בלשונית **Actions** בגיטהאב → הריצה האחרונה של "Android APK" → הורד את `speaker-finder-debug-apk`.
-2. העבר את `app-debug.apk` לטלפון, אפשר "התקנה ממקורות לא ידועים" והתקן.
+1. פתח מהטלפון: https://github.com/captainido/git-practice/releases/download/speaker-finder-latest/SpeakerFinder.apk
+2. אשר "התקנה ממקורות לא ידועים" לדפדפן והתקן.
 
 או לבנות לבד: פתח את התיקייה `speaker-finder` ב-Android Studio ← Run.
 
