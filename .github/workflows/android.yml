@@ -23,20 +23,22 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
-      - name: Build debug APK
-        run: ./gradlew --no-daemon assembleDebug
+      - name: Build optimized APK
+        run: ./gradlew --no-daemon assembleRelease
       - uses: actions/upload-artifact@v4
         with:
-          name: speaker-finder-debug-apk
-          path: speaker-finder/app/build/outputs/apk/debug/app-debug.apk
+          name: speaker-finder-apk
+          path: speaker-finder/app/build/outputs/apk/release/app-release.apk
       - name: Publish APK to the speaker-finder-latest release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk SpeakerFinder.apk
+          cp app/build/outputs/apk/release/app-release.apk SpeakerFinder.apk
+          zip -9 SpeakerFinder.zip SpeakerFinder.apk
+          ls -l SpeakerFinder.apk SpeakerFinder.zip
           gh release delete speaker-finder-latest --yes --cleanup-tag || true
-          gh release create speaker-finder-latest SpeakerFinder.apk \
+          gh release create speaker-finder-latest SpeakerFinder.apk SpeakerFinder.zip \
             --target "${{ github.sha }}" \
             --prerelease \
             --title "Speaker Finder (latest build)" \
-            --notes "Debug APK built from ${{ github.sha }}. Download SpeakerFinder.apk on the phone and install it."
+            --notes "Optimized APK built from ${{ github.sha }}. Download SpeakerFinder.apk on the phone and install it."

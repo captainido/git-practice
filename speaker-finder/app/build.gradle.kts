@@ -18,8 +18,11 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            // Sideloaded test builds: sign with the debug key so the APK installs without a keystore.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
