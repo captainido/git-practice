@@ -1,17 +1,22 @@
 package com.captainido.catalarm
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Outline
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.LinearInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -100,7 +105,18 @@ class AlarmActivity : AppCompatActivity() {
             insets
         }
 
-        rotator = PhotoRotator(findViewById<ImageView>(R.id.photoA), findViewById(R.id.photoB), Names.PHOTOS, 3500)
+        findViewById<View>(R.id.bubbleAvatar).apply {
+            outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: Outline) = outline.setOval(0, 0, view.width, view.height)
+            }
+            clipToOutline = true
+        }
+
+        rotator = PhotoRotator(
+            PhotoRotator.Slide(findViewById(R.id.slideA), findViewById(R.id.slideABg), findViewById(R.id.slideAPhoto)),
+            PhotoRotator.Slide(findViewById(R.id.slideB), findViewById(R.id.slideBBg), findViewById(R.id.slideBPhoto)),
+            intervalMs = 3500,
+        )
         photoFrame.setOnTouchListener { _, e ->
             if (e.action == MotionEvent.ACTION_DOWN) pet(e.x, e.y)
             true
@@ -112,21 +128,39 @@ class AlarmActivity : AppCompatActivity() {
         })
 
         AlarmService.onStopped = { if (!finished) finish() }
-        AlarmService.onCallPlaced = { showCallStatus() }
+        AlarmService.onCallPlaced = { onCallUpdate() }
 
         progress.max = PETS_TO_DISMISS
         updateCounter()
-        if (AlarmService.callPlaced) showCallStatus()
+        onCallUpdate()
         startShow()
+    }
+
+    /** Shows the call status, and dials from here if the background call was blocked. */
+    private fun onCallUpdate() {
+        if (AlarmService.callFailed && !AlarmService.callPlaced) dialFromScreen()
+        if (AlarmService.callPlaced) {
+            callStatus.text = "📞 ${Names.CAT} מתקשר ל${AlarmStore.callName(this)}..."
+            callStatus.visibility = View.VISIBLE
+        }
+    }
+
+    private fun dialFromScreen() {
+        val number = AlarmStore.callNumber(this)
+        if (number.isBlank() || checkSelfPermission(Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) return
+        runCatching {
+            startActivity(Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null)))
+            AlarmService.markCallPlaced()
+        }
     }
 
     private fun startShow() {
         rotator.start()
-        petHint.animate().scaleX(1.08f).scaleY(1.08f).setDuration(600).withEndAction(object : Runnable {
+        petHint.animate().scaleX(1.06f).scaleY(1.06f).setDuration(600).withEndAction(object : Runnable {
             override fun run() {
                 if (finished) return
-                val grow = petHint.scaleX < 1.04f
-                petHint.animate().scaleX(if (grow) 1.08f else 1f).scaleY(if (grow) 1.08f else 1f)
+                val grow = petHint.scaleX < 1.03f
+                petHint.animate().scaleX(if (grow) 1.06f else 1f).scaleY(if (grow) 1.06f else 1f)
                     .setDuration(600).withEndAction(this).start()
             }
         }).start()
@@ -139,9 +173,7 @@ class AlarmActivity : AppCompatActivity() {
     private val nagLoop = object : Runnable {
         override fun run() {
             val lines = NAGS.toMutableList()
-            val callee = AlarmStore.callName(this@AlarmActivity)
-            if (AlarmService.callPending) lines += "עוד רגע אני מתקשר ל$callee ומלשין עליך 📞"
-            if (AlarmService.callPlaced) lines += "התקשרתי ל$callee. עכשיו אתה בצרות 😼"
+            if (AlarmService.callPlaced) lines += "התקשרתי ל${AlarmStore.callName(this@AlarmActivity)}. עכשיו אתה בצרות 😼"
             say(lines.random())
             handler.postDelayed(this, 3200)
         }
@@ -149,7 +181,7 @@ class AlarmActivity : AppCompatActivity() {
 
     private val clockLoop = object : Runnable {
         override fun run() {
-            clock.text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+            clock.text = SimpleDateFormat("HH:mm", Locale.US).format(Date())
             handler.postDelayed(this, 10_000)
         }
     }
@@ -157,7 +189,7 @@ class AlarmActivity : AppCompatActivity() {
     /** Every few seconds Oliver's speech bubble gets impatient. */
     private val bubbleShake = object : Runnable {
         override fun run() {
-            bubble.animate().translationX(18f).setDuration(60).withEndAction {
+            bubble.animate().translationX(16f).setDuration(60).withEndAction {
                 bubble.animate().translationX(0f).setDuration(400).setInterpolator(OvershootInterpolator(8f)).start()
             }.start()
             handler.postDelayed(this, Random.nextLong(2500, 5000))
@@ -167,19 +199,19 @@ class AlarmActivity : AppCompatActivity() {
     private val pawRain = object : Runnable {
         override fun run() {
             if (fx.width > 60) {
-                val paw = emoji(if (Random.nextInt(6) == 0) "🐟" else "🐾", 24f)
-                paw.alpha = 0.5f
+                val paw = emoji(if (Random.nextInt(6) == 0) "🐟" else "🐾", 22f)
+                paw.alpha = 0.45f
                 paw.x = Random.nextInt(fx.width - 60).toFloat()
                 paw.y = -100f
                 paw.animate()
                     .translationY(fx.height + 100f)
                     .rotation(Random.nextFloat() * 720 - 360)
-                    .setDuration(Random.nextLong(3500, 6000))
+                    .setDuration(Random.nextLong(4000, 6500))
                     .setInterpolator(LinearInterpolator())
                     .withEndAction { fx.removeView(paw) }
                     .start()
             }
-            handler.postDelayed(this, 650)
+            handler.postDelayed(this, 800)
         }
     }
 
@@ -221,15 +253,15 @@ class AlarmActivity : AppCompatActivity() {
     private fun trySnooze() {
         if (finished) return
         if (escapes < SNOOZE_ESCAPES) {
-            // The snooze button runs away the first couple of times.
+            // The snooze button dodges the first couple of times.
             say(ESCAPES[escapes])
             escapes++
-            val maxX = (fx.width - snoozeButton.width) / 2f
+            val dodge = 70 * resources.displayMetrics.density
             snoozeButton.animate()
-                .translationX(Random.nextFloat() * 2 * maxX - maxX)
-                .translationY(-Random.nextFloat() * fx.height / 3f)
-                .rotation(Random.nextFloat() * 30 - 15)
-                .setDuration(250)
+                .translationX(if (Random.nextBoolean()) dodge else -dodge)
+                .translationY(-Random.nextFloat() * dodge * 2)
+                .rotation(Random.nextFloat() * 16 - 8)
+                .setDuration(220)
                 .start()
             return
         }
@@ -253,11 +285,6 @@ class AlarmActivity : AppCompatActivity() {
         val cy = fx.height / 2f
         repeat(14) { handler.postDelayed({ floatHeart(cx + Random.nextInt(-200, 200), cy + Random.nextInt(-200, 200)) }, it * 70L) }
         handler.postDelayed({ finish() }, 2200)
-    }
-
-    private fun showCallStatus() {
-        callStatus.text = "📞 ${Names.CAT} מתקשר ל${AlarmStore.callName(this)}..."
-        callStatus.visibility = View.VISIBLE
     }
 
     private fun updateCounter() {

@@ -37,7 +37,7 @@ class AlarmService : Service() {
         private const val ACTION_START = "start"
         private const val ACTION_DISMISS = "dismiss"
         private const val ACTION_SNOOZE = "snooze"
-        private const val EXTRA_TEST = "test"
+        private const val EXTRA_CALL = "call"
         private const val CHANNEL_ID = "oliver_alarm_v2"
         private const val NOTIFICATION_ID = 42
         private const val MAX_RING_MS = 10 * 60_000L
@@ -54,7 +54,11 @@ class AlarmService : Service() {
         var callPlaced = false
             private set
 
-        /** Whether this ring will phone someone (false for the demo). */
+        /** Set when the background call could not be placed; the alarm screen then dials itself. */
+        @Volatile
+        var callFailed = false
+
+        /** Whether this ring is about to phone someone. */
         @Volatile
         var callPending = false
             private set
@@ -65,10 +69,17 @@ class AlarmService : Service() {
         /** Called on the main thread right after the call is placed. */
         var onCallPlaced: (() -> Unit)? = null
 
-        fun start(ctx: Context, test: Boolean = false) {
+        fun start(ctx: Context, withCall: Boolean = true) {
             ctx.startForegroundService(
-                Intent(ctx, AlarmService::class.java).setAction(ACTION_START).putExtra(EXTRA_TEST, test)
+                Intent(ctx, AlarmService::class.java).setAction(ACTION_START).putExtra(EXTRA_CALL, withCall)
             )
+        }
+
+        /** Marks the call as handled by the alarm screen's fallback dialing. */
+        fun markCallPlaced() {
+            callPlaced = true
+            callFailed = false
+            callPending = false
         }
 
         fun dismiss(ctx: Context) {
@@ -96,12 +107,12 @@ class AlarmService : Service() {
                 AlarmScheduler.snooze(this)
                 stopAlarm()
             }
-            else -> startRinging(intent?.getBooleanExtra(EXTRA_TEST, false) ?: false)
+            else -> startRinging(intent?.getBooleanExtra(EXTRA_CALL, true) ?: true)
         }
         return START_NOT_STICKY
     }
 
-    private fun startRinging(test: Boolean) {
+    private fun startRinging(withCall: Boolean) {
         val notification = buildNotification()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
@@ -119,8 +130,10 @@ class AlarmService : Service() {
         handler.postDelayed(volumeRamp, 1000)
         handler.postDelayed({ stopAlarm() }, MAX_RING_MS)
 
-        callPending = !test && AlarmStore.isCallEnabled(this) && AlarmStore.callNumber(this).isNotBlank()
-        if (callPending) handler.postDelayed(placeCall, AlarmStore.callDelayMinutes(this) * 60_000L)
+        // The call goes out together with the alarm (never in the demo unless asked for).
+        callFailed = false
+        callPending = withCall && AlarmStore.isCallEnabled(this) && ContactFinder.resolveIfMissing(this)
+        if (callPending) handler.post(placeCall)
     }
 
     private fun startPlayer() {
@@ -165,7 +178,7 @@ class AlarmService : Service() {
         }
     }
 
-    /** Dials the chosen number on speaker; Oliver gets quieter for a while so the call can be heard. */
+    /** Dials the contact on speaker; Oliver gets quieter for a while so the call can be heard. */
     private val placeCall = Runnable {
         callPending = false
         val number = AlarmStore.callNumber(this)
@@ -173,6 +186,7 @@ class AlarmService : Service() {
             Log.w(TAG, "CALL_PHONE not granted, skipping call")
             return@Runnable
         }
+        if (number.isBlank()) return@Runnable
         try {
             val extras = Bundle().apply {
                 putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true)
@@ -185,6 +199,8 @@ class AlarmService : Service() {
             onCallPlaced?.invoke()
         } catch (e: Exception) {
             Log.w(TAG, "Could not place call", e)
+            callFailed = true
+            onCallPlaced?.invoke()
         }
     }
 

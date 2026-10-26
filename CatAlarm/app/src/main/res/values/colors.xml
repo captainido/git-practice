@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg">#FAF6F1</color>
-    <color name="surface">#FFFFFF</color>
-    <color name="brand">#E0742E</color>
-    <color name="brand_container">#FFE3D0</color>
-    <color name="on_brand_container">#4A1F00</color>
-    <color name="ink">#2A211C</color>
-    <color name="ink_soft">#6E625A</color>
-    <color name="outline">#E6DCD4</color>
-    <color name="warn_bg">#FDECEA</color>
-    <color name="warn_ink">#8C1D18</color>
+    <color name="bg">#111215</color>
+    <color name="surface">#1B1C20</color>
+    <color name="surface_high">#25262B</color>
+    <color name="brand">#FF9A4D</color>
+    <color name="on_brand">#2E1500</color>
+    <color name="brand_container">#43280F</color>
+    <color name="on_brand_container">#FFDCC2</color>
+    <color name="ink">#F3EFEA</color>
+    <color name="ink_soft">#A7A19B</color>
+    <color name="outline">#303136</color>
+    <color name="warn_bg">#3A1D1A</color>
+    <color name="warn_ink">#FFB4AB</color>
 </resources>

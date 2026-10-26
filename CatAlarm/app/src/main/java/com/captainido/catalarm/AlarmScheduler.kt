@@ -13,6 +13,19 @@ object AlarmScheduler {
     private const val REQ_ALARM = 1
     private const val REQ_SNOOZE = 2
 
+    /** The next time the clock shows hour:minute: later today if still ahead, otherwise tomorrow. */
+    fun nextOccurrence(hour: Int, minute: Int, now: Long = System.currentTimeMillis()): Long {
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        if (cal.timeInMillis <= now) cal.add(Calendar.DAY_OF_YEAR, 1)
+        return cal.timeInMillis
+    }
+
     /**
      * When the alarm should ring next, or null if a one-time alarm is already in the past.
      * A daily alarm starts at the chosen date and moves forward a day at a time.

@@ -13,31 +13,57 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <ImageView
-            android:id="@+id/photoA"
+        <FrameLayout
+            android:id="@+id/slideA"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="אוליבר"
-            android:scaleType="centerCrop" />
+            android:layout_height="match_parent">
 
-        <ImageView
-            android:id="@+id/photoB"
+            <ImageView
+                android:id="@+id/slideABg"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleType="centerCrop" />
+
+            <ImageView
+                android:id="@+id/slideAPhoto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="אוליבר"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/slideB"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:alpha="0"
-            android:importantForAccessibility="no"
-            android:scaleType="centerCrop" />
+            android:alpha="0">
+
+            <ImageView
+                android:id="@+id/slideBBg"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleType="centerCrop" />
+
+            <ImageView
+                android:id="@+id/slideBPhoto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
     </FrameLayout>
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="320dp"
+        android:layout_height="300dp"
         android:layout_gravity="top"
         android:background="@drawable/scrim_top" />
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="380dp"
+        android:layout_height="320dp"
         android:layout_gravity="bottom"
         android:background="@drawable/scrim_bottom" />
 
@@ -54,25 +80,28 @@
         android:layout_gravity="top"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingStart="24dp"
-        android:paddingTop="24dp"
-        android:paddingEnd="24dp">
+        android:paddingStart="20dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="20dp">
 
         <TextView
             android:id="@+id/clockText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-light"
-            android:shadowColor="#80000000"
-            android:shadowRadius="8"
+            android:fontFamily="@font/rubik_light"
+            android:includeFontPadding="false"
+            android:shadowColor="#99000000"
+            android:shadowRadius="10"
             android:textColor="#FFFFFF"
-            android:textSize="80sp" />
+            android:textSize="84sp" />
 
         <TextView
+            android:id="@+id/greetingText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:shadowColor="#80000000"
-            android:shadowRadius="6"
+            android:fontFamily="@font/rubik_medium"
+            android:shadowColor="#99000000"
+            android:shadowRadius="8"
             android:text="בוקר טוב, עידו ☀️"
             android:textColor="#FFFFFF"
             android:textSize="20sp" />
@@ -81,31 +110,47 @@
             android:id="@+id/bubble"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="18dp"
             android:background="@drawable/bubble"
-            android:elevation="6dp"
-            android:orientation="vertical"
-            android:paddingStart="18dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
             android:paddingTop="12dp"
             android:paddingEnd="18dp"
-            android:paddingBottom="14dp">
+            android:paddingBottom="12dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🐱 אוליבר"
-                android:textColor="@color/brand"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+            <ImageView
+                android:id="@+id/bubbleAvatar"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:importantForAccessibility="no"
+                android:scaleType="centerCrop"
+                android:src="@drawable/cat_face" />
 
-            <TextView
-                android:id="@+id/captionText"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:minLines="2"
-                android:textColor="@color/ink"
-                android:textSize="20sp" />
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/rubik_bold"
+                    android:text="אוליבר"
+                    android:textColor="@color/brand"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/captionText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/rubik_regular"
+                    android:minLines="2"
+                    android:textColor="@color/ink"
+                    android:textSize="18sp" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
@@ -118,63 +163,70 @@
         android:clipToPadding="false"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingStart="28dp"
-        android:paddingEnd="28dp"
-        android:paddingBottom="28dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp">
 
         <TextView
             android:id="@+id/callStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="14dp"
+            android:layout_marginBottom="12dp"
             android:background="@drawable/glass_pill"
+            android:fontFamily="@font/rubik_medium"
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp"
             android:textColor="#FFFFFF"
             android:textSize="15sp"
             android:visibility="gone" />
 
-        <TextView
-            android:id="@+id/petHint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:shadowColor="#80000000"
-            android:shadowRadius="6"
-            android:text="👆 לטף את אוליבר כדי לכבות"
-            android:textColor="#FFFFFF"
-            android:textSize="19sp"
-            android:textStyle="bold" />
-
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/petProgress"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:max="10"
-            app:indicatorColor="@color/brand"
-            app:trackColor="#40FFFFFF"
-            app:trackCornerRadius="6dp"
-            app:trackThickness="10dp" />
+            android:background="@drawable/panel"
+            android:clipChildren="false"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="20dp">
 
-        <TextView
-            android:id="@+id/counterText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:textColor="#D9FFFFFF"
-            android:textSize="14sp" />
+            <TextView
+                android:id="@+id/petHint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/rubik_bold"
+                android:text="👆 לטף את אוליבר כדי לכבות"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/snoozeButton"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="56dp"
-            android:layout_marginTop="18dp"
-            android:paddingHorizontal="28dp"
-            android:text="😾  נודניק 5 דק׳"
-            android:textColor="#FFFFFF"
-            android:textSize="17sp"
-            app:backgroundTint="#33FFFFFF"
-            app:strokeColor="#80FFFFFF" />
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/petProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:max="10"
+                app:indicatorColor="@color/brand"
+                app:trackColor="#33FFFFFF"
+                app:trackCornerRadius="6dp"
+                app:trackThickness="10dp" />
+
+            <TextView
+                android:id="@+id/counterText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:fontFamily="@font/rubik_regular"
+                android:textColor="@color/ink_soft"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/snoozeButton"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="14dp"
+                android:text="😾  נודניק 5 דק׳"
+                android:textSize="16sp"
+                app:cornerRadius="27dp" />
+        </LinearLayout>
     </LinearLayout>
 </FrameLayout>
