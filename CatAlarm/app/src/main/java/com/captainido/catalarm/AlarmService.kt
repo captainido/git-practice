@@ -1,5 +1,6 @@
 package com.captainido.catalarm
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -7,42 +8,67 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.graphics.BitmapFactory
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.PlaybackParams
+import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.telecom.TelecomManager
+import android.util.Log
 
-/** Plays the cat recording in a loop (with a different "mood" each round) until dismissed. */
+/**
+ * Plays Oliver's meow in a loop (in a different "mood" each round) until dismissed,
+ * and optionally phones someone on speaker to help wake Ido up.
+ */
 class AlarmService : Service() {
 
     companion object {
+        private const val TAG = "AlarmService"
         private const val ACTION_START = "start"
         private const val ACTION_DISMISS = "dismiss"
         private const val ACTION_SNOOZE = "snooze"
-        private const val CHANNEL_ID = "cat_alarm_v1"
+        private const val EXTRA_TEST = "test"
+        private const val CHANNEL_ID = "oliver_alarm_v2"
         private const val NOTIFICATION_ID = 42
         private const val MAX_RING_MS = 10 * 60_000L
+        private const val CALL_DUCK_MS = 90_000L
 
-        // Normal cat, chipmunk cat, angry big cat, squeaky kitten, slow-motion cat...
+        // Normal Oliver, chipmunk Oliver, big angry Oliver, squeaky kitten, slow-motion Oliver...
         private val MOODS = floatArrayOf(1.0f, 1.45f, 0.75f, 1.9f, 1.0f, 0.6f, 1.25f, 2.2f)
 
         @Volatile
         var isRinging = false
             private set
 
+        @Volatile
+        var callPlaced = false
+            private set
+
+        /** Whether this ring will phone someone (false for the demo). */
+        @Volatile
+        var callPending = false
+            private set
+
         /** Called on the main thread when the alarm stops for any reason. */
         var onStopped: (() -> Unit)? = null
 
-        fun start(ctx: Context) {
-            ctx.startForegroundService(Intent(ctx, AlarmService::class.java).setAction(ACTION_START))
+        /** Called on the main thread right after the call is placed. */
+        var onCallPlaced: (() -> Unit)? = null
+
+        fun start(ctx: Context, test: Boolean = false) {
+            ctx.startForegroundService(
+                Intent(ctx, AlarmService::class.java).setAction(ACTION_START).putExtra(EXTRA_TEST, test)
+            )
         }
 
         fun dismiss(ctx: Context) {
@@ -59,6 +85,7 @@ class AlarmService : Service() {
     private var vibrator: Vibrator? = null
     private var round = 0
     private var volume = 0.35f
+    private var ducked = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -69,12 +96,12 @@ class AlarmService : Service() {
                 AlarmScheduler.snooze(this)
                 stopAlarm()
             }
-            else -> startRinging()
+            else -> startRinging(intent?.getBooleanExtra(EXTRA_TEST, false) ?: false)
         }
         return START_NOT_STICKY
     }
 
-    private fun startRinging() {
+    private fun startRinging(test: Boolean) {
         val notification = buildNotification()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
@@ -83,12 +110,17 @@ class AlarmService : Service() {
         }
         if (isRinging) return
         isRinging = true
+        callPlaced = false
+        ducked = false
         round = 0
         volume = 0.35f
         startPlayer()
         startVibration()
         handler.postDelayed(volumeRamp, 1000)
         handler.postDelayed({ stopAlarm() }, MAX_RING_MS)
+
+        callPending = !test && AlarmStore.isCallEnabled(this) && AlarmStore.callNumber(this).isNotBlank()
+        if (callPending) handler.postDelayed(placeCall, AlarmStore.callDelayMinutes(this) * 60_000L)
     }
 
     private fun startPlayer() {
@@ -127,8 +159,32 @@ class AlarmService : Service() {
     private val volumeRamp = object : Runnable {
         override fun run() {
             volume = (volume + 0.03f).coerceAtMost(1f)
-            player?.setVolume(volume, volume)
-            if (volume < 1f) handler.postDelayed(this, 1000)
+            val v = if (ducked) 0.15f else volume
+            player?.setVolume(v, v)
+            handler.postDelayed(this, 1000)
+        }
+    }
+
+    /** Dials the chosen number on speaker; Oliver gets quieter for a while so the call can be heard. */
+    private val placeCall = Runnable {
+        callPending = false
+        val number = AlarmStore.callNumber(this)
+        if (checkSelfPermission(Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "CALL_PHONE not granted, skipping call")
+            return@Runnable
+        }
+        try {
+            val extras = Bundle().apply {
+                putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true)
+            }
+            getSystemService(TelecomManager::class.java).placeCall(Uri.fromParts("tel", number, null), extras)
+            callPlaced = true
+            ducked = true
+            player?.setVolume(0.15f, 0.15f)
+            handler.postDelayed({ ducked = false }, CALL_DUCK_MS)
+            onCallPlaced?.invoke()
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not place call", e)
         }
     }
 
@@ -138,10 +194,7 @@ class AlarmService : Service() {
         vibrator = v
         // "Paw, paw... PAAAW" pattern.
         val effect = VibrationEffect.createWaveform(longArrayOf(0, 150, 120, 150, 500, 700, 900), 0)
-        v.vibrate(
-            effect,
-            AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build()
-        )
+        v.vibrate(effect, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build())
     }
 
     private fun stopAlarm() {
@@ -154,6 +207,7 @@ class AlarmService : Service() {
         vibrator?.cancel()
         vibrator = null
         isRinging = false
+        callPending = false
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
         onStopped?.invoke()
@@ -167,8 +221,8 @@ class AlarmService : Service() {
     private fun buildNotification(): Notification {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "החתול המעורר", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "ההתראה שמופיעה כשהחתול מעיר אותך"
+            NotificationChannel(CHANNEL_ID, "אוליבר המעורר", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "ההתראה שמופיעה כשאוליבר מעיר את ${Names.HUMAN}"
                 setSound(null, null)
                 enableVibration(false)
                 setBypassDnd(true)
@@ -188,14 +242,14 @@ class AlarmService : Service() {
         val builder = Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_paw)
             .setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.cat_face))
-            .setContentTitle("😾 מיאו!! זמן לקום!")
-            .setContentText("החתול מחכה. ליטופים בלבד יכבו אותו.")
+            .setContentTitle("😾 ${Names.CAT}: ${Names.HUMAN}, קום!")
+            .setContentText("רק ליטופים יכבו אותי.")
             .setCategory(Notification.CATEGORY_ALARM)
             .setVisibility(Notification.VISIBILITY_PUBLIC)
             .setOngoing(true)
             .setContentIntent(open)
             .setFullScreenIntent(open, true)
-            .addAction(Notification.Action.Builder(null, "😾 עוד 5 דקות", snooze).build())
+            .addAction(Notification.Action.Builder(null, "😾 נודניק ${AlarmScheduler.SNOOZE_MINUTES} דק׳", snooze).build())
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             builder.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
         }

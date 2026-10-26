@@ -13,16 +13,16 @@ object AlarmScheduler {
     private const val REQ_ALARM = 1
     private const val REQ_SNOOZE = 2
 
-    /** Next wall-clock time for hour:minute, at least a minute from now. */
-    fun nextTrigger(hour: Int, minute: Int): Long {
+    /**
+     * When the alarm should ring next, or null if a one-time alarm is already in the past.
+     * A daily alarm starts at the chosen date and moves forward a day at a time.
+     */
+    fun nextTrigger(ctx: Context): Long? {
+        val at = AlarmStore.alarmAt(ctx)
         val now = System.currentTimeMillis()
-        val cal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        if (cal.timeInMillis - now < 60_000) cal.add(Calendar.DAY_OF_YEAR, 1)
+        if (!AlarmStore.isRepeating(ctx)) return if (at > now) at else null
+        val cal = Calendar.getInstance().apply { timeInMillis = at }
+        while (cal.timeInMillis - now < 30_000) cal.add(Calendar.DAY_OF_YEAR, 1)
         return cal.timeInMillis
     }
 
@@ -31,7 +31,13 @@ object AlarmScheduler {
             cancel(ctx)
             return
         }
-        setAt(ctx, nextTrigger(AlarmStore.hour(ctx), AlarmStore.minute(ctx)), snooze = false)
+        val next = nextTrigger(ctx)
+        if (next == null) {
+            AlarmStore.setEnabled(ctx, false)
+            cancel(ctx)
+            return
+        }
+        setAt(ctx, next, snooze = false)
     }
 
     fun snooze(ctx: Context) =

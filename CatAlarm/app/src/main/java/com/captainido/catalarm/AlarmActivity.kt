@@ -1,70 +1,76 @@
 package com.captainido.catalarm
 
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
-import android.app.Activity
-import android.graphics.Outline
-import android.os.Build
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.MotionEvent
 import android.view.View
-import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.LinearInterpolator
 import android.view.animation.OvershootInterpolator
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import android.window.OnBackInvokedDispatcher
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.random.Random
 
-/** The wake-up screen: an impatient cat that only stops when petted enough. */
-class AlarmActivity : Activity() {
+/** The wake-up screen: Oliver, impatient, only stops when petted enough. */
+class AlarmActivity : AppCompatActivity() {
 
     companion object {
         private const val PETS_TO_DISMISS = 10
         private const val SNOOZE_ESCAPES = 2
 
         private val NAGS = listOf(
-            "מיאו! הקערה ריקה כבר שעה!",
-            "קום! אני לא אאכיל את עצמי 😾",
-            "שמתי לב שאתה עדיין במיטה. מאכזב.",
+            "${Names.HUMAN}! קום! הקערה ריקה כבר שעה!",
+            "אני, ${Names.CAT}, לא אאכיל את עצמי 😾",
+            "${Names.HUMAN}, שמתי לב שאתה עדיין במיטה. מאכזב.",
             "עוד דקה ואני מפיל משהו מהשולחן 🏺",
             "ליטוף = סליחה. בלי ליטוף = בלי סליחה.",
-            "אני יודע איפה אתה ישן. 👀",
+            "אני יודע איפה אתה ישן, ${Names.HUMAN}. 👀",
             "זה לא שעון מעורר. זה אולטימטום.",
             "בוקר טוב לך. לי עוד לא, כי אין אוכל.",
             "הכרית שלך נראית נוחה. בשבילי.",
             "אני אשב לך על הפנים. אל תבחן אותי.",
-            "לטף אותי כדי לכבות. אלה החוקים. 🐾"
         )
         private val PET_REACTIONS = listOf(
             "פררר...", "עוד!", "יותר שמאלה.", "לא שם!", "אוקיי, זה נחמד",
-            "אולי אסלח לך...", "המשך, עבד.", "פרררררר 😽", "מה, זה הכל?"
+            "אולי אסלח לך...", "המשך, ${Names.HUMAN}.", "פרררררר 😽", "מה, זה הכל?"
         )
-        private val ESCAPES = listOf("חה! לא כל כך מהר 😹", "נודניק? לא בחתול שלי 😼")
+        private val ESCAPES = listOf("חה! לא כל כך מהר 😹", "נודניק? לא אצל ${Names.CAT} 😼")
         private val HEARTS = listOf("❤️", "🐾", "😻", "💕", "✨", "🐟")
-        private val BACKGROUNDS = intArrayOf(0xFFFFD6A5.toInt(), 0xFFFFADAD.toInt(), 0xFFCAFFBF.toInt(), 0xFFA0C4FF.toInt(), 0xFFFDFFB6.toInt())
     }
 
     private val handler = Handler(Looper.getMainLooper())
-    private lateinit var root: FrameLayout
-    private lateinit var cat: ImageView
+    private lateinit var fx: FrameLayout
+    private lateinit var photoFrame: FrameLayout
+    private lateinit var bubble: LinearLayout
     private lateinit var caption: TextView
     private lateinit var counter: TextView
     private lateinit var clock: TextView
-    private lateinit var snoozeButton: Button
-    private var petsLeft = PETS_TO_DISMISS
+    private lateinit var petHint: TextView
+    private lateinit var callStatus: TextView
+    private lateinit var progress: LinearProgressIndicator
+    private lateinit var snoozeButton: MaterialButton
+    private lateinit var rotator: PhotoRotator
+    private var pets = 0
     private var escapes = 0
     private var finished = false
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setShowWhenLocked(true)
@@ -72,62 +78,71 @@ class AlarmActivity : Activity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContentView(R.layout.activity_alarm)
 
-        root = findViewById(R.id.root)
-        cat = findViewById(R.id.catImage)
+        fx = findViewById(R.id.fxLayer)
+        photoFrame = findViewById(R.id.photoFrame)
+        bubble = findViewById(R.id.bubble)
         caption = findViewById(R.id.captionText)
         counter = findViewById(R.id.counterText)
         clock = findViewById(R.id.clockText)
+        petHint = findViewById(R.id.petHint)
+        callStatus = findViewById(R.id.callStatus)
+        progress = findViewById(R.id.petProgress)
         snoozeButton = findViewById(R.id.snoozeButton)
 
-        cat.outlineProvider = object : ViewOutlineProvider() {
-            override fun getOutline(view: View, outline: Outline) =
-                outline.setRoundRect(0, 0, view.width, view.height, 40 * resources.displayMetrics.density)
+        val topPanel = findViewById<View>(R.id.topPanel)
+        val bottomPanel = findViewById<View>(R.id.bottomPanel)
+        val topPad = topPanel.paddingTop
+        val bottomPad = bottomPanel.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            topPanel.updatePadding(top = topPad + bars.top)
+            bottomPanel.updatePadding(bottom = bottomPad + bars.bottom)
+            insets
         }
-        cat.clipToOutline = true
-        cat.setOnClickListener { pet() }
+
+        rotator = PhotoRotator(findViewById<ImageView>(R.id.photoA), findViewById(R.id.photoB), Names.PHOTOS, 3500)
+        photoFrame.setOnTouchListener { _, e ->
+            if (e.action == MotionEvent.ACTION_DOWN) pet(e.x, e.y)
+            true
+        }
         snoozeButton.setOnClickListener { trySnooze() }
 
-        if (Build.VERSION.SDK_INT >= 33) {
-            // The cat does not accept "back" as an answer.
-            onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
-                say("לאן אתה חושב שאתה הולך? 😾")
-            }
-        }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() = say("לאן אתה חושב שאתה הולך? 😾")
+        })
 
         AlarmService.onStopped = { if (!finished) finish() }
+        AlarmService.onCallPlaced = { showCallStatus() }
 
+        progress.max = PETS_TO_DISMISS
         updateCounter()
+        if (AlarmService.callPlaced) showCallStatus()
         startShow()
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        say("לאן אתה חושב שאתה הולך? 😾")
-    }
-
     private fun startShow() {
-        ObjectAnimator.ofFloat(cat, View.ROTATION, -7f, 7f).apply {
-            duration = 280
-            repeatMode = ValueAnimator.REVERSE
-            repeatCount = ValueAnimator.INFINITE
-            start()
-        }
-        ValueAnimator.ofArgb(*BACKGROUNDS).apply {
-            duration = 6000
-            repeatMode = ValueAnimator.REVERSE
-            repeatCount = ValueAnimator.INFINITE
-            addUpdateListener { root.setBackgroundColor(it.animatedValue as Int) }
-            start()
-        }
+        rotator.start()
+        petHint.animate().scaleX(1.08f).scaleY(1.08f).setDuration(600).withEndAction(object : Runnable {
+            override fun run() {
+                if (finished) return
+                val grow = petHint.scaleX < 1.04f
+                petHint.animate().scaleX(if (grow) 1.08f else 1f).scaleY(if (grow) 1.08f else 1f)
+                    .setDuration(600).withEndAction(this).start()
+            }
+        }).start()
         handler.post(nagLoop)
         handler.post(clockLoop)
         handler.post(pawRain)
-        handler.postDelayed(pounce, 3500)
+        handler.postDelayed(bubbleShake, 2500)
     }
 
     private val nagLoop = object : Runnable {
         override fun run() {
-            say(NAGS.random())
+            val lines = NAGS.toMutableList()
+            val callee = AlarmStore.callName(this@AlarmActivity)
+            if (AlarmService.callPending) lines += "עוד רגע אני מתקשר ל$callee ומלשין עליך 📞"
+            if (AlarmService.callPlaced) lines += "התקשרתי ל$callee. עכשיו אתה בצרות 😼"
+            say(lines.random())
             handler.postDelayed(this, 3200)
         }
     }
@@ -139,12 +154,11 @@ class AlarmActivity : Activity() {
         }
     }
 
-    /** Every few seconds the cat lunges at the screen. */
-    private val pounce = object : Runnable {
+    /** Every few seconds Oliver's speech bubble gets impatient. */
+    private val bubbleShake = object : Runnable {
         override fun run() {
-            cat.animate().scaleX(1.25f).scaleY(1.25f).setDuration(180).withEndAction {
-                cat.animate().scaleX(1f).scaleY(1f).setDuration(450)
-                    .setInterpolator(OvershootInterpolator(3f)).start()
+            bubble.animate().translationX(18f).setDuration(60).withEndAction {
+                bubble.animate().translationX(0f).setDuration(400).setInterpolator(OvershootInterpolator(8f)).start()
             }.start()
             handler.postDelayed(this, Random.nextLong(2500, 5000))
         }
@@ -152,53 +166,55 @@ class AlarmActivity : Activity() {
 
     private val pawRain = object : Runnable {
         override fun run() {
-            if (root.width > 0) {
-                val paw = emoji(if (Random.nextInt(6) == 0) "🐟" else "🐾", 28f)
-                paw.alpha = 0.55f
-                paw.x = Random.nextInt(root.width - 60).toFloat()
+            if (fx.width > 60) {
+                val paw = emoji(if (Random.nextInt(6) == 0) "🐟" else "🐾", 24f)
+                paw.alpha = 0.5f
+                paw.x = Random.nextInt(fx.width - 60).toFloat()
                 paw.y = -100f
                 paw.animate()
-                    .translationY(root.height + 100f)
+                    .translationY(fx.height + 100f)
                     .rotation(Random.nextFloat() * 720 - 360)
-                    .setDuration(Random.nextLong(3000, 5500))
+                    .setDuration(Random.nextLong(3500, 6000))
                     .setInterpolator(LinearInterpolator())
-                    .withEndAction { root.removeView(paw) }
+                    .withEndAction { fx.removeView(paw) }
                     .start()
             }
-            handler.postDelayed(this, 450)
+            handler.postDelayed(this, 650)
         }
     }
 
-    private fun pet() {
+    private fun pet(x: Float, y: Float) {
         if (finished) return
-        petsLeft--
-        cat.animate().cancel()
-        cat.scaleX = 0.88f
-        cat.scaleY = 0.88f
-        cat.animate().scaleX(1f).scaleY(1f).setDuration(350).setInterpolator(OvershootInterpolator(4f)).start()
-        floatHeart()
-        if (petsLeft <= 0) {
+        pets++
+        photoFrame.animate().cancel()
+        photoFrame.scaleX = 0.97f
+        photoFrame.scaleY = 0.97f
+        photoFrame.animate().scaleX(1f).scaleY(1f).setDuration(300).setInterpolator(OvershootInterpolator(3f)).start()
+        floatHeart(x, y)
+        progress.setProgressCompat(pets, true)
+        if (pets >= PETS_TO_DISMISS) {
             dismissAlarm()
             return
         }
+        if (pets % 3 == 0) rotator.next()
         handler.removeCallbacks(nagLoop)
         say(PET_REACTIONS.random())
         handler.postDelayed(nagLoop, 2500)
         updateCounter()
     }
 
-    private fun floatHeart() {
+    private fun floatHeart(x: Float, y: Float) {
         val heart = emoji(HEARTS.random(), 40f)
-        heart.x = cat.x + cat.width * Random.nextFloat()
-        heart.y = cat.y + cat.height * 0.4f
+        heart.x = x - 40
+        heart.y = y - 60
         heart.animate()
-            .translationYBy(-500f)
+            .translationYBy(-450f)
             .translationXBy(Random.nextFloat() * 200 - 100)
             .alpha(0f)
             .scaleX(1.8f).scaleY(1.8f)
             .setDuration(1100)
             .setInterpolator(AccelerateInterpolator())
-            .withEndAction { root.removeView(heart) }
+            .withEndAction { fx.removeView(heart) }
             .start()
     }
 
@@ -208,56 +224,68 @@ class AlarmActivity : Activity() {
             // The snooze button runs away the first couple of times.
             say(ESCAPES[escapes])
             escapes++
-            val maxX = (root.width - snoozeButton.width) / 2f
-            val maxY = root.height / 2.5f
+            val maxX = (fx.width - snoozeButton.width) / 2f
             snoozeButton.animate()
                 .translationX(Random.nextFloat() * 2 * maxX - maxX)
-                .translationY(-Random.nextFloat() * maxY)
-                .rotation(Random.nextFloat() * 40 - 20)
+                .translationY(-Random.nextFloat() * fx.height / 3f)
+                .rotation(Random.nextFloat() * 30 - 15)
                 .setDuration(250)
                 .start()
             return
         }
         finished = true
-        AlarmService.onStopped = null
+        clearCallbacks()
         AlarmService.snooze(this)
-        Toast.makeText(this, "החתול יחזור בעוד ${AlarmScheduler.SNOOZE_MINUTES} דקות. עצבני יותר. 😾", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "${Names.CAT} יחזור בעוד ${AlarmScheduler.SNOOZE_MINUTES} דקות. עצבני יותר. 😾", Toast.LENGTH_LONG).show()
         finish()
     }
 
     private fun dismissAlarm() {
         finished = true
-        AlarmService.onStopped = null
+        clearCallbacks()
         AlarmService.dismiss(this)
         handler.removeCallbacksAndMessages(null)
-        caption.text = "טוב. סלחתי לך. עכשיו - אוכל! 😼🍗"
-        counter.text = "בוקר טוב ☀️"
+        caption.text = "טוב, ${Names.HUMAN}. סלחתי לך. עכשיו – אוכל! 😼🍗"
+        petHint.text = "בוקר טוב ☀️"
+        counter.text = ""
         snoozeButton.visibility = View.GONE
-        repeat(12) { handler.postDelayed({ floatHeart() }, it * 70L) }
+        val cx = fx.width / 2f
+        val cy = fx.height / 2f
+        repeat(14) { handler.postDelayed({ floatHeart(cx + Random.nextInt(-200, 200), cy + Random.nextInt(-200, 200)) }, it * 70L) }
         handler.postDelayed({ finish() }, 2200)
     }
 
+    private fun showCallStatus() {
+        callStatus.text = "📞 ${Names.CAT} מתקשר ל${AlarmStore.callName(this)}..."
+        callStatus.visibility = View.VISIBLE
+    }
+
     private fun updateCounter() {
-        counter.text = "לטף את החתול עוד $petsLeft פעמים כדי לכבות 🐾"
+        counter.text = "$pets / $PETS_TO_DISMISS ליטופים"
     }
 
     private fun say(text: String) {
         caption.text = text
-        caption.scaleX = 0.7f
-        caption.scaleY = 0.7f
-        caption.animate().scaleX(1f).scaleY(1f).setDuration(300).setInterpolator(OvershootInterpolator()).start()
+        caption.alpha = 0f
+        caption.animate().alpha(1f).setDuration(250).start()
     }
 
     private fun emoji(text: String, sizeSp: Float): TextView =
         TextView(this).also {
             it.text = text
             it.textSize = sizeSp
-            root.addView(it, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT))
+            fx.addView(it, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT))
         }
+
+    private fun clearCallbacks() {
+        AlarmService.onStopped = null
+        AlarmService.onCallPlaced = null
+    }
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
-        if (AlarmService.onStopped != null && !finished) AlarmService.onStopped = null
+        rotator.stop()
+        if (!finished) clearCallbacks()
         super.onDestroy()
     }
 }
