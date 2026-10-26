@@ -37,9 +37,9 @@ object ContactFinder {
 
     /** Fills in the stored contact from the address book if it is still missing. */
     fun resolveIfMissing(ctx: Context): Boolean {
-        if (AlarmStore.callNumber(ctx).isNotBlank()) return true
+        if (AlarmRepo.callNumber(ctx).isNotBlank()) return true
         val match = find(ctx, Names.DEFAULT_CALLEE).firstOrNull() ?: return false
-        AlarmStore.setCallContact(ctx, match.name, match.number)
+        AlarmRepo.setCallContact(ctx, match.name, match.number)
         return true
     }
 }

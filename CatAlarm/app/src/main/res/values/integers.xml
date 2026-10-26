@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Motion durations (ms) -->
+    <integer name="motion_short">150</integer>
+    <integer name="motion_medium">300</integer>
+    <integer name="motion_long">600</integer>
+    <integer name="motion_ambient">1800</integer>
+</resources>

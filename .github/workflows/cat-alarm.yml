@@ -50,7 +50,7 @@ jobs:
         with:
           tag_name: cat-alarm-build-${{ github.run_number }}
           target_commitish: ${{ github.sha }}
-          name: "😼 אוליבר המעורר - build ${{ github.run_number }}"
+          name: "Oliver - build ${{ github.run_number }}"
           body: |
             הורידו את `CatAlarm.apk` והתקינו בטלפון אנדרואיד (8.1 ומעלה).
             `CatAlarm.rar` מכיל את אותו APK, ארוז ב-RAR.

@@ -1,15 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg">#111215</color>
-    <color name="surface">#1B1C20</color>
-    <color name="surface_high">#25262B</color>
-    <color name="brand">#FF9A4D</color>
-    <color name="on_brand">#2E1500</color>
-    <color name="brand_container">#43280F</color>
-    <color name="on_brand_container">#FFDCC2</color>
-    <color name="ink">#F3EFEA</color>
-    <color name="ink_soft">#A7A19B</color>
-    <color name="outline">#303136</color>
-    <color name="warn_bg">#3A1D1A</color>
-    <color name="warn_ink">#FFB4AB</color>
+    <!-- Oliver design system · color tokens (dark, tonal surfaces, champagne-gold accent) -->
+    <color name="canvas">#0B0C0F</color>
+    <color name="surface_1">#141519</color>
+    <color name="surface_2">#1C1D22</color>
+    <color name="surface_3">#25272D</color>
+    <color name="outline">#2C2E35</color>
+    <color name="hairline">#1FFFFFFF</color>
+
+    <color name="text_primary">#F4F1EC</color>
+    <color name="text_secondary">#A9A49C</color>
+    <color name="text_tertiary">#6F6B66</color>
+
+    <color name="gold">#D8B67A</color>
+    <color name="gold_bright">#ECD2A1</color>
+    <color name="on_gold">#241A08</color>
+    <color name="gold_container">#33291A</color>
+    <color name="on_gold_container">#F2DDB5</color>
+
+    <color name="danger">#E5867A</color>
+    <color name="danger_container">#36201D</color>
+
+    <color name="scrim_strong">#E60B0C0F</color>
+    <color name="scrim_soft">#800B0C0F</color>
+    <color name="glass">#26FFFFFF</color>
+    <color name="glass_stroke">#33FFFFFF</color>
 </resources>

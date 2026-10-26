@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing scale (4dp grid) -->
+    <dimen name="space_1">4dp</dimen>
+    <dimen name="space_2">8dp</dimen>
+    <dimen name="space_3">12dp</dimen>
+    <dimen name="space_4">16dp</dimen>
+    <dimen name="space_5">20dp</dimen>
+    <dimen name="space_6">24dp</dimen>
+    <dimen name="space_7">32dp</dimen>
+    <dimen name="space_8">40dp</dimen>
+    <dimen name="space_9">56dp</dimen>
+
+    <!-- Radius -->
+    <dimen name="radius_sm">12dp</dimen>
+    <dimen name="radius_md">16dp</dimen>
+    <dimen name="radius_lg">24dp</dimen>
+    <dimen name="radius_xl">32dp</dimen>
+    <dimen name="radius_pill">100dp</dimen>
+
+    <!-- Sizes -->
+    <dimen name="touch_target">48dp</dimen>
+    <dimen name="icon">24dp</dimen>
+    <dimen name="icon_sm">20dp</dimen>
+    <dimen name="day_chip">38dp</dimen>
+    <dimen name="button_tall">64dp</dimen>
+    <dimen name="hero_height">300dp</dimen>
+    <dimen name="avatar_ring">168dp</dimen>
+    <dimen name="avatar">132dp</dimen>
+</resources>

@@ -11,8 +11,8 @@ android {
         applicationId = "com.captainido.catalarm"
         minSdk = 27
         targetSdk = 35
-        versionCode = 3
-        versionName = "3.0"
+        versionCode = 4
+        versionName = "4.0"
     }
 
     // Toy app: the keystore lives in the repo so every CI build can update the installed app.

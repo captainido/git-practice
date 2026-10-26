@@ -4,229 +4,156 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black"
-    android:clipChildren="false">
+    android:background="@color/canvas">
 
-    <!-- Tapping anywhere on Oliver pets him -->
+    <!-- Ambient backdrop: Oliver's photos, blurred, slowly cross-fading -->
     <FrameLayout
-        android:id="@+id/photoFrame"
+        android:id="@+id/slideA"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <FrameLayout
-            android:id="@+id/slideA"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ImageView
-                android:id="@+id/slideABg"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:importantForAccessibility="no"
-                android:scaleType="centerCrop" />
-
-            <ImageView
-                android:id="@+id/slideAPhoto"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="אוליבר"
-                android:scaleType="fitCenter" />
-        </FrameLayout>
-
-        <FrameLayout
-            android:id="@+id/slideB"
+        <ImageView
+            android:id="@+id/slideABg"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:alpha="0">
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
 
-            <ImageView
-                android:id="@+id/slideBBg"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:importantForAccessibility="no"
-                android:scaleType="centerCrop" />
+        <ImageView
+            android:id="@+id/slideAPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.35"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
+    </FrameLayout>
 
-            <ImageView
-                android:id="@+id/slideBPhoto"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:importantForAccessibility="no"
-                android:scaleType="fitCenter" />
-        </FrameLayout>
+    <FrameLayout
+        android:id="@+id/slideB"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0">
+
+        <ImageView
+            android:id="@+id/slideBBg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
+
+        <ImageView
+            android:id="@+id/slideBPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.35"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
     </FrameLayout>
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:layout_gravity="top"
-        android:background="@drawable/scrim_top" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="320dp"
-        android:layout_gravity="bottom"
-        android:background="@drawable/scrim_bottom" />
-
-    <FrameLayout
-        android:id="@+id/fxLayer"
-        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipChildren="false" />
+        android:background="@drawable/scrim_full" />
 
     <LinearLayout
-        android:id="@+id/topPanel"
+        android:id="@+id/content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
+        android:layout_height="match_parent"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingStart="20dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="20dp">
+        android:paddingStart="@dimen/space_6"
+        android:paddingTop="@dimen/space_8"
+        android:paddingEnd="@dimen/space_6"
+        android:paddingBottom="@dimen/space_6">
+
+        <TextView
+            android:id="@+id/labelText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="@dimen/space_2"
+            android:gravity="center"
+            android:text="התראה"
+            android:textAppearance="@style/TextAppearance.Oliver.Overline" />
 
         <TextView
             android:id="@+id/clockText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/rubik_light"
+            android:layout_marginTop="@dimen/space_2"
             android:includeFontPadding="false"
-            android:shadowColor="#99000000"
-            android:shadowRadius="10"
-            android:textColor="#FFFFFF"
-            android:textSize="84sp" />
+            android:textAppearance="@style/TextAppearance.Oliver.Clock" />
 
         <TextView
-            android:id="@+id/greetingText"
+            android:id="@+id/dateText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/rubik_medium"
-            android:shadowColor="#99000000"
-            android:shadowRadius="8"
-            android:text="בוקר טוב, עידו ☀️"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp" />
+            android:textAppearance="@style/TextAppearance.Oliver.Body"
+            android:textColor="@color/text_secondary" />
 
-        <LinearLayout
-            android:id="@+id/bubble"
+        <!-- Avatar with pulsing rings -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:background="@drawable/bubble"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="14dp"
-            android:paddingTop="12dp"
-            android:paddingEnd="18dp"
-            android:paddingBottom="12dp">
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <View
+                android:id="@+id/pulse1"
+                android:layout_width="@dimen/avatar_ring"
+                android:layout_height="@dimen/avatar_ring"
+                android:layout_gravity="center"
+                android:alpha="0"
+                android:background="@drawable/ring" />
+
+            <View
+                android:id="@+id/pulse2"
+                android:layout_width="@dimen/avatar_ring"
+                android:layout_height="@dimen/avatar_ring"
+                android:layout_gravity="center"
+                android:alpha="0"
+                android:background="@drawable/ring" />
+
+            <View
+                android:layout_width="@dimen/avatar_ring"
+                android:layout_height="@dimen/avatar_ring"
+                android:layout_gravity="center"
+                android:background="@drawable/ring" />
 
             <ImageView
-                android:id="@+id/bubbleAvatar"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:importantForAccessibility="no"
+                android:id="@+id/avatar"
+                android:layout_width="@dimen/avatar"
+                android:layout_height="@dimen/avatar"
+                android:layout_gravity="center"
+                android:contentDescription="אוליבר"
                 android:scaleType="centerCrop"
                 android:src="@drawable/cat_face" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/rubik_bold"
-                    android:text="אוליבר"
-                    android:textColor="@color/brand"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:id="@+id/captionText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/rubik_regular"
-                    android:minLines="2"
-                    android:textColor="@color/ink"
-                    android:textSize="18sp" />
-            </LinearLayout>
-        </LinearLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/bottomPanel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:clipChildren="false"
-        android:clipToPadding="false"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="16dp">
+        </FrameLayout>
 
         <TextView
             android:id="@+id/callStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:background="@drawable/glass_pill"
-            android:fontFamily="@font/rubik_medium"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
+            android:layout_marginBottom="@dimen/space_5"
+            android:background="@drawable/pill_glass"
+            android:drawablePadding="@dimen/space_2"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="@dimen/space_4"
+            android:paddingVertical="@dimen/space_2"
+            android:textAppearance="@style/TextAppearance.Oliver.BodySmall"
+            android:textColor="@color/text_primary"
             android:visibility="gone" />
 
-        <LinearLayout
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/stopButton"
+            style="@style/Oliver.Button.Primary"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/panel"
-            android:clipChildren="false"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:layout_height="@dimen/button_tall"
+            android:text="עצירה" />
 
-            <TextView
-                android:id="@+id/petHint"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/rubik_bold"
-                android:text="👆 לטף את אוליבר כדי לכבות"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp" />
-
-            <com.google.android.material.progressindicator.LinearProgressIndicator
-                android:id="@+id/petProgress"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:max="10"
-                app:indicatorColor="@color/brand"
-                app:trackColor="#33FFFFFF"
-                app:trackCornerRadius="6dp"
-                app:trackThickness="10dp" />
-
-            <TextView
-                android:id="@+id/counterText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:fontFamily="@font/rubik_regular"
-                android:textColor="@color/ink_soft"
-                android:textSize="14sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/snoozeButton"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="14dp"
-                android:text="😾  נודניק 5 דק׳"
-                android:textSize="16sp"
-                app:cornerRadius="27dp" />
-        </LinearLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/snoozeButton"
+            style="@style/Oliver.Button.Glass"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_tall"
+            android:layout_marginTop="@dimen/space_3" />
     </LinearLayout>
 </FrameLayout>

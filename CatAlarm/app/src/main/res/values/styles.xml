@@ -1,68 +1,174 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="colorPrimary">@color/brand</item>
-        <item name="colorOnPrimary">@color/on_brand</item>
-        <item name="colorPrimaryContainer">@color/brand_container</item>
-        <item name="colorOnPrimaryContainer">@color/on_brand_container</item>
-        <item name="colorSecondaryContainer">@color/surface_high</item>
-        <item name="colorOnSecondaryContainer">@color/ink</item>
-        <item name="colorSurface">@color/surface</item>
-        <item name="colorSurfaceContainerHigh">@color/surface_high</item>
-        <item name="colorSurfaceContainerHighest">@color/surface_high</item>
-        <item name="colorOnSurface">@color/ink</item>
-        <item name="colorOnSurfaceVariant">@color/ink_soft</item>
+        <item name="colorPrimary">@color/gold</item>
+        <item name="colorOnPrimary">@color/on_gold</item>
+        <item name="colorPrimaryContainer">@color/gold_container</item>
+        <item name="colorOnPrimaryContainer">@color/on_gold_container</item>
+        <item name="colorSecondary">@color/gold</item>
+        <item name="colorSecondaryContainer">@color/surface_3</item>
+        <item name="colorOnSecondaryContainer">@color/text_primary</item>
+        <item name="colorSurface">@color/surface_1</item>
+        <item name="colorSurfaceContainerLow">@color/surface_1</item>
+        <item name="colorSurfaceContainer">@color/surface_2</item>
+        <item name="colorSurfaceContainerHigh">@color/surface_2</item>
+        <item name="colorSurfaceContainerHighest">@color/surface_3</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
         <item name="colorOutline">@color/outline</item>
-        <item name="android:colorBackground">@color/bg</item>
-        <item name="android:windowBackground">@color/bg</item>
-        <item name="android:statusBarColor">@color/bg</item>
-        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="colorOutlineVariant">@color/outline</item>
+        <item name="colorError">@color/danger</item>
+        <item name="android:colorBackground">@color/canvas</item>
+        <item name="android:windowBackground">@color/canvas</item>
+        <item name="android:statusBarColor">@color/canvas</item>
+        <item name="android:navigationBarColor">@color/canvas</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:fontFamily">@font/rubik</item>
         <item name="fontFamily">@font/rubik</item>
-        <item name="textAppearanceDisplayLarge">@style/Text.DisplayLarge</item>
-        <item name="textAppearanceHeadlineLarge">@style/Text.Headline</item>
-        <item name="textAppearanceHeadlineSmall">@style/Text.Headline</item>
-        <item name="textAppearanceTitleMedium">@style/Text.Title</item>
-        <item name="textAppearanceTitleSmall">@style/Text.Title</item>
-        <item name="textAppearanceBodyLarge">@style/Text.Body</item>
-        <item name="textAppearanceBodyMedium">@style/Text.Body</item>
-        <item name="textAppearanceLabelLarge">@style/Text.Label</item>
-        <item name="textAppearanceLabelMedium">@style/Text.Label</item>
+        <item name="textAppearanceDisplayLarge">@style/TextAppearance.Oliver.Display</item>
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.Oliver.Headline</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.Oliver.Headline</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.Oliver.Title</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.Oliver.Title</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.Oliver.Label</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.Oliver.Body</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.Oliver.BodySmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.Oliver.Label</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.Oliver.Label</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Oliver.Dialog</item>
     </style>
 
-    <style name="Text.DisplayLarge" parent="TextAppearance.Material3.DisplayLarge">
-        <item name="fontFamily">@font/rubik_regular</item>
-        <item name="android:fontFamily">@font/rubik_regular</item>
-    </style>
-    <style name="Text.Headline" parent="TextAppearance.Material3.HeadlineSmall">
-        <item name="fontFamily">@font/rubik_medium</item>
-        <item name="android:fontFamily">@font/rubik_medium</item>
-    </style>
-    <style name="Text.Title" parent="TextAppearance.Material3.TitleMedium">
-        <item name="fontFamily">@font/rubik_medium</item>
-        <item name="android:fontFamily">@font/rubik_medium</item>
-    </style>
-    <style name="Text.Body" parent="TextAppearance.Material3.BodyLarge">
-        <item name="fontFamily">@font/rubik_regular</item>
-        <item name="android:fontFamily">@font/rubik_regular</item>
-    </style>
-    <style name="Text.Label" parent="TextAppearance.Material3.LabelLarge">
-        <item name="fontFamily">@font/rubik_medium</item>
-        <item name="android:fontFamily">@font/rubik_medium</item>
+    <style name="ThemeOverlay.Oliver.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">@color/surface_2</item>
+        <item name="colorSurfaceContainerHigh">@color/surface_2</item>
     </style>
 
     <style name="AlarmTheme" parent="AppTheme">
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowBackground">@color/canvas</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/black</item>
+        <item name="android:navigationBarColor">@color/canvas</item>
     </style>
 
-    <style name="Card" parent="">
-        <item name="cardBackgroundColor">@color/surface</item>
-        <item name="cardCornerRadius">24dp</item>
+    <!-- Type scale (Rubik) -->
+    <style name="TextAppearance.Oliver.Clock" parent="TextAppearance.Material3.DisplayLarge">
+        <item name="fontFamily">@font/rubik_light</item>
+        <item name="android:fontFamily">@font/rubik_light</item>
+        <item name="android:textSize">104sp</item>
+        <item name="android:letterSpacing">-0.03</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.Oliver.Display" parent="TextAppearance.Material3.DisplayLarge">
+        <item name="fontFamily">@font/rubik_light</item>
+        <item name="android:fontFamily">@font/rubik_light</item>
+        <item name="android:textSize">64sp</item>
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.Oliver.CardTime" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="fontFamily">@font/rubik_light</item>
+        <item name="android:fontFamily">@font/rubik_light</item>
+        <item name="android:textSize">52sp</item>
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.Oliver.Headline" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="fontFamily">@font/rubik_medium</item>
+        <item name="android:fontFamily">@font/rubik_medium</item>
+        <item name="android:textSize">26sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.Oliver.Title" parent="TextAppearance.Material3.TitleMedium">
+        <item name="fontFamily">@font/rubik_medium</item>
+        <item name="android:fontFamily">@font/rubik_medium</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.Oliver.Body" parent="TextAppearance.Material3.BodyLarge">
+        <item name="fontFamily">@font/rubik_regular</item>
+        <item name="android:fontFamily">@font/rubik_regular</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.Oliver.BodySmall" parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">@font/rubik_regular</item>
+        <item name="android:fontFamily">@font/rubik_regular</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+    <style name="TextAppearance.Oliver.Label" parent="TextAppearance.Material3.LabelLarge">
+        <item name="fontFamily">@font/rubik_medium</item>
+        <item name="android:fontFamily">@font/rubik_medium</item>
+        <item name="android:textSize">15sp</item>
+    </style>
+    <style name="TextAppearance.Oliver.Overline" parent="TextAppearance.Material3.LabelMedium">
+        <item name="fontFamily">@font/rubik_medium</item>
+        <item name="android:fontFamily">@font/rubik_medium</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:textColor">@color/gold</item>
+    </style>
+
+    <!-- Components -->
+    <style name="Oliver.Card" parent="Widget.Material3.CardView.Filled">
+        <item name="cardBackgroundColor">@color/surface_1</item>
+        <item name="cardCornerRadius">@dimen/radius_lg</item>
         <item name="cardElevation">0dp</item>
-        <item name="strokeWidth">0dp</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="strokeColor">@color/hairline</item>
+    </style>
+
+    <style name="Oliver.Button.Primary" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/gold</item>
+        <item name="android:textColor">@color/on_gold</item>
+        <item name="android:textAppearance">@style/TextAppearance.Oliver.Label</item>
+        <item name="android:textSize">17sp</item>
+        <item name="cornerRadius">@dimen/radius_pill</item>
+        <item name="android:minHeight">@dimen/button_tall</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <style name="Oliver.Button.Glass" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="backgroundTint">@color/glass</item>
+        <item name="strokeColor">@color/glass_stroke</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textAppearance">@style/TextAppearance.Oliver.Label</item>
+        <item name="android:textSize">17sp</item>
+        <item name="cornerRadius">@dimen/radius_pill</item>
+        <item name="android:minHeight">@dimen/button_tall</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <style name="Oliver.Row" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">@dimen/touch_target</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+        <item name="android:paddingTop">@dimen/space_2</item>
+        <item name="android:paddingBottom">@dimen/space_2</item>
+    </style>
+
+    <style name="Oliver.RowIcon" parent="">
+        <item name="android:layout_width">@dimen/icon</item>
+        <item name="android:layout_height">@dimen/icon</item>
+        <item name="android:layout_marginEnd">@dimen/space_4</item>
+        <item name="tint">@color/text_secondary</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <style name="Oliver.RowText" parent="">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textAppearance">@style/TextAppearance.Oliver.Body</item>
+    </style>
+
+    <style name="ShapeAppearance.Oliver.Fab" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
     </style>
 </resources>
