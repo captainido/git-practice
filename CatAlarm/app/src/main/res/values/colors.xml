@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="cream">#FFF4E6</color>
+    <color name="orange">#FF8A3D</color>
+    <color name="orange_dark">#D9661C</color>
+    <color name="ink">#3B2A20</color>
+    <color name="ink_soft">#7A6455</color>
+    <color name="card">#FFFFFF</color>
+    <color name="warn">#C62828</color>
+</resources>
