@@ -30,10 +30,20 @@ jobs:
           ./gradlew assembleRelease --no-daemon --stacktrace
           cp app/build/outputs/apk/release/app-release.apk CatAlarm.apk
 
+      - name: Pack APK into RAR
+        working-directory: CatAlarm
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq rar
+          rar a -ep CatAlarm.rar CatAlarm.apk
+          rar t CatAlarm.rar
+
       - uses: actions/upload-artifact@v4
         with:
           name: CatAlarm-apk
-          path: CatAlarm/CatAlarm.apk
+          path: |
+            CatAlarm/CatAlarm.apk
+            CatAlarm/CatAlarm.rar
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
@@ -43,5 +53,8 @@ jobs:
           name: "😼 החתול המעורר - build ${{ github.run_number }}"
           body: |
             הורידו את `CatAlarm.apk` והתקינו בטלפון אנדרואיד (8.1 ומעלה).
-          files: CatAlarm/CatAlarm.apk
+            `CatAlarm.rar` מכיל את אותו APK, ארוז ב-RAR.
+          files: |
+            CatAlarm/CatAlarm.apk
+            CatAlarm/CatAlarm.rar
           make_latest: true
