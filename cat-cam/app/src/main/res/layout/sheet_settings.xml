@@ -31,13 +31,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:stepSize="5"
-        android:valueFrom="30"
+        android:valueFrom="50"
         android:valueTo="95" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="מכל אחוז כזה ומעלה — מצלם. נמוך = לא מפספס את החתול. ברירת מחדל: 50%."
+        android:text="החתול צריך לעבור את הרף ב-3 מתוך 4 פריימים רצופים (כשנייה). גבוה = ודאות גבוהה יותר. ברירת מחדל: 65%."
         android:textColor="@color/text_dim"
         android:textSize="12sp" />
 

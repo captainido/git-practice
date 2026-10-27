@@ -15,10 +15,10 @@ class Prefs(context: Context) {
         get() = snap(sp.getInt("captureIntervalSec", 10), 5, 120)
         set(v) = sp.edit { putInt("captureIntervalSec", snap(v, 5, 120)) }
 
-    /** Minimum ML Kit confidence (percent) for the "Cat" label. Any cat seen is our cat. */
-    var minConfidence: Int
-        get() = snap(sp.getInt("minConfidence", 50), 30, 95)
-        set(v) = sp.edit { putInt("minConfidence", snap(v, 30, 95)) }
+    /** Minimum detector score (percent) for a frame to count as "cat". */
+    var detectionThreshold: Int
+        get() = snap(sp.getInt("detectorThreshold", 65), 50, 95)
+        set(v) = sp.edit { putInt("detectorThreshold", snap(v, 50, 95)) }
 
     var useFrontCamera: Boolean
         get() = sp.getBoolean("useFrontCamera", false)

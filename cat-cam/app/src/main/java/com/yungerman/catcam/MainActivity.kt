@@ -51,6 +51,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var clockText: TextView
     private lateinit var detectionChip: TextView
     private lateinit var flashOverlay: View
+    private lateinit var detectionOverlay: DetectionOverlayView
     private lateinit var todayCountText: TextView
     private lateinit var lastDetectionText: TextView
     private lateinit var lastPhoto: ShapeableImageView
@@ -85,6 +86,7 @@ class MainActivity : AppCompatActivity() {
         clockText = findViewById(R.id.clockText)
         detectionChip = findViewById(R.id.detectionChip)
         flashOverlay = findViewById(R.id.flashOverlay)
+        detectionOverlay = findViewById(R.id.detectionOverlay)
         todayCountText = findViewById(R.id.todayCountText)
         lastDetectionText = findViewById(R.id.lastDetectionText)
         lastPhoto = findViewById(R.id.lastPhoto)
@@ -144,11 +146,17 @@ class MainActivity : AppCompatActivity() {
                 launch {
                     combine(
                         CatCamState.running,
-                        CatCamState.catConfidence,
-                        CatCamState.catDetected,
+                        CatCamState.catScore,
+                        CatCamState.catHit,
+                        CatCamState.catConfirmed,
                         CatCamState.nextCaptureAt,
-                    ) { running, confidence, detected, nextAt -> Detection(running, confidence, detected, nextAt) }
+                    ) { running, score, hit, confirmed, nextAt -> Detection(running, score, hit, confirmed, nextAt) }
                         .collect(::renderDetection)
+                }
+                launch {
+                    combine(CatCamState.running, CatCamState.catBox, CatCamState.catConfirmed) { running, box, confirmed ->
+                        detectionOverlay.show(if (running) box else null, confirmed, mirrored = prefs.useFrontCamera)
+                    }.collect {}
                 }
                 launch { CatCamState.detectionsToday.collect { todayCountText.text = it.toString() } }
                 launch { CatCamState.lastDetectionTime.collect { lastDetectionText.text = it ?: "—" } }
@@ -180,23 +188,36 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private data class Detection(val running: Boolean, val confidence: Float, val detected: Boolean, val nextCaptureAt: Long)
+    private data class Detection(
+        val running: Boolean,
+        val score: Float,
+        val hit: Boolean,
+        val confirmed: Boolean,
+        val nextCaptureAt: Long,
+    )
 
     private fun renderDetection(d: Detection) {
         if (!d.running) {
             detectionChip.visibility = View.GONE
             return
         }
-        val percent = Math.round(d.confidence * 100)
+        val percent = Math.round(d.score * 100)
         val secondsToNext = ((d.nextCaptureAt - System.currentTimeMillis() + 999) / 1000).coerceAtLeast(0)
         detectionChip.visibility = View.VISIBLE
         detectionChip.text = when {
-            d.detected && secondsToNext > 0 -> "🐱  חתול זוהה · $percent% · צילום הבא בעוד $secondsToNext ש׳"
-            d.detected -> "🐱  חתול זוהה · $percent% · מצלם"
+            d.confirmed && secondsToNext > 0 -> "🐱  חתול זוהה · $percent% · צילום הבא בעוד $secondsToNext ש׳"
+            d.confirmed -> "🐱  חתול זוהה · $percent% · מצלם"
+            d.hit -> "מאמת חתול… $percent%"
             percent > 0 -> "מחפש חתול… ($percent%)"
             else -> "מחפש חתול…"
         }
-        detectionChip.setBackgroundResource(if (d.detected) R.drawable.bg_chip_detected else R.drawable.bg_chip)
+        detectionChip.setBackgroundResource(
+            when {
+                d.confirmed -> R.drawable.bg_chip_detected
+                d.hit -> R.drawable.bg_chip_checking
+                else -> R.drawable.bg_chip
+            }
+        )
     }
 
     private fun flash() {
@@ -234,10 +255,10 @@ class MainActivity : AppCompatActivity() {
 
         val confidenceLabel = view.findViewById<TextView>(R.id.confidenceLabel)
         val confidenceSlider = view.findViewById<Slider>(R.id.confidenceSlider)
-        confidenceSlider.value = prefs.minConfidence.toFloat()
-        confidenceLabel.text = "רף ביטחון לזיהוי: ${prefs.minConfidence}%"
+        confidenceSlider.value = prefs.detectionThreshold.toFloat()
+        confidenceLabel.text = "רף ביטחון לזיהוי: ${prefs.detectionThreshold}%"
         confidenceSlider.addOnChangeListener { _, value, _ ->
-            prefs.minConfidence = value.toInt()
+            prefs.detectionThreshold = value.toInt()
             confidenceLabel.text = "רף ביטחון לזיהוי: ${value.toInt()}%"
         }
 

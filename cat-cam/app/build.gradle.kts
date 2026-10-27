@@ -11,12 +11,13 @@ android {
         applicationId = "com.yungerman.catcam"
         minSdk = 29
         targetSdk = 35
-        versionCode = 4
-        versionName = "2.1"
+        versionCode = 5
+        versionName = "2.2"
 
-        // Real phones only (ARM); drops emulator code and halves the APK size.
+        // 64-bit ARM only: MediaPipe ships no 32-bit library, so a 32-bit phone should be
+        // refused at install time rather than crash at the first detection.
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            abiFilters += listOf("arm64-v8a")
         }
     }
 
@@ -45,6 +46,11 @@ android {
         jvmTarget = "17"
     }
 
+    // The detector model is memory-mapped from assets, so it must stay uncompressed.
+    androidResources {
+        noCompress += "tflite"
+    }
+
     // Compressed APK: this app is sideloaded, so download size matters more than install size.
     packaging {
         jniLibs.useLegacyPackaging = true
@@ -63,6 +69,6 @@ dependencies {
     implementation("androidx.camera:camera-camera2:$camerax")
     implementation("androidx.camera:camera-lifecycle:$camerax")
     implementation("androidx.camera:camera-view:$camerax")
-    implementation("com.google.mlkit:image-labeling:17.0.9")
+    implementation("com.google.mediapipe:tasks-vision:0.10.26")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }
