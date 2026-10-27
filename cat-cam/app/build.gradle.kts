@@ -11,8 +11,8 @@ android {
         applicationId = "com.yungerman.catcam"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         // Real phones only (ARM); drops emulator code and halves the APK size.
         ndk {
@@ -57,7 +57,5 @@ dependencies {
     implementation("androidx.camera:camera-camera2:$camerax")
     implementation("androidx.camera:camera-lifecycle:$camerax")
     implementation("com.google.mlkit:image-labeling:17.0.9")
-    implementation("androidx.work:work-runtime-ktx:2.9.1")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }

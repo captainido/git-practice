@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.graphics.Bitmap
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
@@ -38,7 +39,7 @@ import java.util.concurrent.Executors
 
 /**
  * Foreground service that watches the camera, and when it sees the cat:
- * plays a sound, takes a photo, and queues it to be sent to Lilach on WhatsApp.
+ * plays a sound, takes a timestamped photo, saves it and shows it in a notification.
  */
 class CatCamService : LifecycleService() {
 
@@ -88,6 +89,11 @@ class CatCamService : LifecycleService() {
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
             NotificationChannel(CHANNEL_ID, "מצלמת חתול פעילה", NotificationManager.IMPORTANCE_LOW)
+        )
+        // Silent channel: the detection tone is played by the service itself (and can be turned off).
+        manager.createNotificationChannel(
+            NotificationChannel(DETECTION_CHANNEL_ID, "זיהוי החתול", NotificationManager.IMPORTANCE_HIGH)
+                .apply { setSound(null, null) }
         )
         val openApp = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
@@ -202,9 +208,9 @@ class CatCamService : LifecycleService() {
                     val bitmap = PhotoStore.prepare(image.toBitmap(), image.imageInfo.rotationDegrees, timeText)
                     val file = PhotoStore.save(this@CatCamService, bitmap, time)
                     CatCamState.lastPhotoPath.value = file.absolutePath
-                    val caption = "🐱 זוהה החתול!\n📅 ${timeText.substringBefore(' ')}\n🕒 ${timeText.substringAfter(' ')}"
-                    SendWorker.enqueue(this@CatCamService, file, caption, timeText)
+                    CatCamState.lastDetection.value = "🐱 זוהה החתול ב-$timeText (נשמר בגלריה: Pictures/CatCam)"
                     CatCamState.status.value = "🟢 פעילה — זיהוי אחרון: $timeText"
+                    showDetectionNotification(bitmap, timeText)
                 } catch (e: Exception) {
                     CatCamState.status.value = "שגיאה בשמירת התמונה: ${e.message}"
                 } finally {
@@ -218,6 +224,29 @@ class CatCamService : LifecycleService() {
                 capturing = false
             }
         })
+    }
+
+    private fun showDetectionNotification(photo: Bitmap, timeText: String) {
+        val manager = getSystemService(NotificationManager::class.java)
+        if (!manager.areNotificationsEnabled()) return
+        val openApp = PendingIntent.getActivity(
+            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
+        )
+        // Full-size photos are too large to pass to the notification system.
+        val scale = 720f / maxOf(photo.width, photo.height)
+        val small = Bitmap.createScaledBitmap(photo, (photo.width * scale).toInt(), (photo.height * scale).toInt(), true)
+        val notification = NotificationCompat.Builder(this, DETECTION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("🐱 זוהה החתול!")
+            .setContentText(timeText)
+            .setLargeIcon(small)
+            .setStyle(NotificationCompat.BigPictureStyle().bigPicture(small).bigLargeIcon(null as Bitmap?))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(openApp)
+            .setAutoCancel(true)
+            .build()
+        // A new id each time keeps earlier detections in the notification shade.
+        manager.notify((System.currentTimeMillis() / 1000).toInt(), notification)
     }
 
     override fun onDestroy() {
@@ -234,6 +263,7 @@ class CatCamService : LifecycleService() {
     companion object {
         const val ACTION_STOP = "com.yungerman.catcam.STOP"
         private const val CHANNEL_ID = "catcam"
+        private const val DETECTION_CHANNEL_ID = "detections"
         private const val NOTIFICATION_ID = 1
         /** Analyze ~2 frames per second: plenty for a cat, easy on the battery. */
         private const val ANALYZE_INTERVAL_MS = 500L

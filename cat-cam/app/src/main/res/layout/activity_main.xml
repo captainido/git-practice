@@ -63,7 +63,7 @@
                     android:visibility="gone" />
 
                 <TextView
-                    android:id="@+id/sendStatusText"
+                    android:id="@+id/lastDetectionText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -79,93 +79,10 @@
             android:text="הגדרות"
             android:textAppearance="?attr/textAppearanceTitleLarge" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="מספר הטלפון של לילך (למשל 0501234567)">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/phoneInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="phone"
-                android:textDirection="ltr" />
-        </com.google.android.material.textfield.TextInputLayout>
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="פרטי Green-API (מועתקים מ-console.green-api.com)"
-            android:textAppearance="?attr/textAppearanceTitleSmall" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="idInstance">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/idInstanceInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="number"
-                android:textDirection="ltr" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="apiTokenInstance"
-            app:endIconMode="password_toggle">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/tokenInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textPassword"
-                android:textDirection="ltr" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="apiUrl">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/apiUrlInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textUri"
-                android:textDirection="ltr" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="mediaUrl">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/mediaUrlInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textUri"
-                android:textDirection="ltr" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
             android:text="זיהוי"
             android:textAppearance="?attr/textAppearanceTitleSmall" />
 
@@ -226,12 +143,6 @@
             android:layout_marginTop="16dp"
             android:text="שמור הגדרות" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/testButton"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="שלח הודעת בדיקה ללילך" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/batteryButton"

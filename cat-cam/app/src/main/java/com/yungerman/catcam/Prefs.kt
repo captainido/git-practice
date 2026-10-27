@@ -7,26 +7,6 @@ import androidx.core.content.edit
 class Prefs(context: Context) {
     private val sp = context.getSharedPreferences("catcam", Context.MODE_PRIVATE)
 
-    var phone: String
-        get() = sp.getString("phone", "")!!
-        set(v) = sp.edit { putString("phone", v.trim()) }
-
-    var idInstance: String
-        get() = sp.getString("idInstance", "")!!
-        set(v) = sp.edit { putString("idInstance", v.trim()) }
-
-    var apiToken: String
-        get() = sp.getString("apiToken", "")!!
-        set(v) = sp.edit { putString("apiToken", v.trim()) }
-
-    var apiUrl: String
-        get() = sp.getString("apiUrl", DEFAULT_API_URL)!!
-        set(v) = sp.edit { putString("apiUrl", v.trim().trimEnd('/')) }
-
-    var mediaUrl: String
-        get() = sp.getString("mediaUrl", DEFAULT_MEDIA_URL)!!
-        set(v) = sp.edit { putString("mediaUrl", v.trim().trimEnd('/')) }
-
     var cooldownMinutes: Int
         get() = sp.getInt("cooldownMinutes", 5)
         set(v) = sp.edit { putInt("cooldownMinutes", v.coerceIn(0, 1440)) }
@@ -43,19 +23,4 @@ class Prefs(context: Context) {
     var soundEnabled: Boolean
         get() = sp.getBoolean("soundEnabled", true)
         set(v) = sp.edit { putBoolean("soundEnabled", v) }
-
-    /** Returns a Hebrew error message, or null when everything needed for sending is set. */
-    fun validate(): String? = when {
-        GreenApi.chatId(phone) == null -> "מספר הטלפון של לילך לא תקין"
-        idInstance.isBlank() -> "חסר idInstance"
-        apiToken.isBlank() -> "חסר apiTokenInstance"
-        !apiUrl.startsWith("https://") -> "apiUrl צריך להתחיל ב-https://"
-        !mediaUrl.startsWith("https://") -> "mediaUrl צריך להתחיל ב-https://"
-        else -> null
-    }
-
-    companion object {
-        const val DEFAULT_API_URL = "https://api.green-api.com"
-        const val DEFAULT_MEDIA_URL = "https://media.green-api.com"
-    }
 }
