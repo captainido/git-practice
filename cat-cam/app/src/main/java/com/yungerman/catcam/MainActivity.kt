@@ -142,8 +142,13 @@ class MainActivity : AppCompatActivity() {
                 launch { CatCamState.running.collect(::renderRunning) }
                 launch { CatCamState.status.collect { statusText.text = it } }
                 launch {
-                    CatCamState.running.combine(CatCamState.catConfidence) { running, c -> running to c }
-                        .collect { (running, confidence) -> renderDetection(running, confidence) }
+                    combine(
+                        CatCamState.running,
+                        CatCamState.catConfidence,
+                        CatCamState.catDetected,
+                        CatCamState.nextCaptureAt,
+                    ) { running, confidence, detected, nextAt -> Detection(running, confidence, detected, nextAt) }
+                        .collect(::renderDetection)
                 }
                 launch { CatCamState.detectionsToday.collect { todayCountText.text = it.toString() } }
                 launch { CatCamState.lastDetectionTime.collect { lastDetectionText.text = it ?: "—" } }
@@ -175,20 +180,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun renderDetection(running: Boolean, confidence: Float) {
-        if (!running) {
+    private data class Detection(val running: Boolean, val confidence: Float, val detected: Boolean, val nextCaptureAt: Long)
+
+    private fun renderDetection(d: Detection) {
+        if (!d.running) {
             detectionChip.visibility = View.GONE
             return
         }
-        val percent = (confidence * 100).toInt()
-        val detected = percent >= prefs.minConfidence
+        val percent = Math.round(d.confidence * 100)
+        val secondsToNext = ((d.nextCaptureAt - System.currentTimeMillis() + 999) / 1000).coerceAtLeast(0)
         detectionChip.visibility = View.VISIBLE
         detectionChip.text = when {
-            detected -> "🐱  חתול זוהה · $percent%"
+            d.detected && secondsToNext > 0 -> "🐱  חתול זוהה · $percent% · צילום הבא בעוד $secondsToNext ש׳"
+            d.detected -> "🐱  חתול זוהה · $percent% · מצלם"
             percent > 0 -> "מחפש חתול… ($percent%)"
             else -> "מחפש חתול…"
         }
-        detectionChip.setBackgroundResource(if (detected) R.drawable.bg_chip_detected else R.drawable.bg_chip)
+        detectionChip.setBackgroundResource(if (d.detected) R.drawable.bg_chip_detected else R.drawable.bg_chip)
     }
 
     private fun flash() {
@@ -233,15 +241,14 @@ class MainActivity : AppCompatActivity() {
             confidenceLabel.text = "רף ביטחון לזיהוי: ${value.toInt()}%"
         }
 
-        val cooldownLabel = view.findViewById<TextView>(R.id.cooldownLabel)
-        val cooldownSlider = view.findViewById<Slider>(R.id.cooldownSlider)
-        fun cooldownText(minutes: Int) =
-            if (minutes == 0) "המתנה בין צילומים: ללא" else "המתנה בין צילומים: $minutes דק׳"
-        cooldownSlider.value = prefs.cooldownMinutes.toFloat()
-        cooldownLabel.text = cooldownText(prefs.cooldownMinutes)
-        cooldownSlider.addOnChangeListener { _, value, _ ->
-            prefs.cooldownMinutes = value.toInt()
-            cooldownLabel.text = cooldownText(value.toInt())
+        val intervalLabel = view.findViewById<TextView>(R.id.intervalLabel)
+        val intervalSlider = view.findViewById<Slider>(R.id.intervalSlider)
+        fun intervalText(seconds: Int) = "צילום כל $seconds שניות כשהחתול בתמונה"
+        intervalSlider.value = prefs.captureIntervalSeconds.toFloat()
+        intervalLabel.text = intervalText(prefs.captureIntervalSeconds)
+        intervalSlider.addOnChangeListener { _, value, _ ->
+            prefs.captureIntervalSeconds = value.toInt()
+            intervalLabel.text = intervalText(value.toInt())
         }
 
         view.findViewById<MaterialSwitch>(R.id.soundSwitch).apply {

@@ -220,7 +220,7 @@
                     style="@style/CatCam.StatLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="זיהויים היום" />
+                    android:text="צילומים היום" />
 
                 <TextView
                     android:id="@+id/todayCountText"

@@ -80,9 +80,10 @@ class CatCamService : LifecycleService() {
 
     // Analysis state: touched on the analysis executor / main thread only.
     private var lastAnalyzedAt = 0L
-    private var consecutiveHits = 0
-    private var lastAlertAt = 0L
+    @Volatile private var lastCaptureAt = 0L
+    private var lastSeenAt = 0L
     @Volatile private var capturing = false
+    @Volatile private var captureStartedAt = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -194,6 +195,9 @@ class CatCamService : LifecycleService() {
     @OptIn(ExperimentalGetImage::class)
     private fun analyze(proxy: ImageProxy) {
         val now = SystemClock.elapsedRealtime()
+        // Safety net: a capture that never reported back must not block all future captures.
+        if (capturing && now - captureStartedAt > CAPTURE_TIMEOUT_MS) capturing = false
+
         val mediaImage = proxy.image
         if (mediaImage == null || capturing || now - lastAnalyzedAt < ANALYZE_INTERVAL_MS) {
             proxy.close()
@@ -205,25 +209,31 @@ class CatCamService : LifecycleService() {
         labeler.process(input)
             .addOnSuccessListener { labels ->
                 val confidence = labels.firstOrNull { it.text.equals("Cat", ignoreCase = true) }?.confidence ?: 0f
+                // Compare whole percents (as shown on screen) so 70% really passes a 70% threshold.
+                val detected = Math.round(confidence * 100) >= prefs.minConfidence
                 CatCamState.catConfidence.value = confidence
-                if (confidence * 100 >= prefs.minConfidence) {
-                    consecutiveHits++
-                    if (consecutiveHits >= REQUIRED_HITS) {
-                        consecutiveHits = 0
-                        onCatDetected()
-                    }
-                } else {
-                    consecutiveHits = 0
-                }
+                CatCamState.catDetected.value = detected
+                if (detected) onCatDetected() else CatCamState.nextCaptureAt.value = 0L
             }
             .addOnCompleteListener { proxy.close() }
     }
 
+    /** Keeps photographing every [Prefs.captureIntervalSeconds] while the cat stays in view. */
     private fun onCatDetected() {
         val now = System.currentTimeMillis()
-        if (now - lastAlertAt < prefs.cooldownMinutes * 60_000L) return
-        lastAlertAt = now
-        if (prefs.soundEnabled) playDetectionSound()
+        // Beep once per visit (cat was away a while), not on every repeat photo.
+        val newVisit = now - lastSeenAt > VISIT_GAP_MS
+        lastSeenAt = now
+
+        val intervalMs = prefs.captureIntervalSeconds * 1000L
+        if (now - lastCaptureAt < intervalMs) {
+            CatCamState.nextCaptureAt.value = lastCaptureAt + intervalMs
+            return
+        }
+        if (capturing) return
+        lastCaptureAt = now
+        CatCamState.nextCaptureAt.value = now + intervalMs
+        if (newVisit && prefs.soundEnabled) playDetectionSound()
         takePhoto(Date(now), manual = false)
     }
 
@@ -238,6 +248,7 @@ class CatCamService : LifecycleService() {
         val capture = imageCapture ?: return
         if (capturing) return
         capturing = true
+        captureStartedAt = SystemClock.elapsedRealtime()
 
         capture.takePicture(captureExecutor, object : ImageCapture.OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
@@ -251,8 +262,10 @@ class CatCamService : LifecycleService() {
                         CatCamState.detectionsToday.value = prefs.incrementDetectionsToday()
                         CatCamState.lastDetectionTime.value = SimpleDateFormat("HH:mm", Locale.US).format(time)
                     }
+                    CatCamState.status.value = "בניטור · מחפש את החתול"
                 } catch (e: Exception) {
                     CatCamState.status.value = "שגיאה בשמירת התמונה: ${e.message}"
+                    if (!manual) lastCaptureAt = 0L // retry on the next frame instead of waiting
                 } finally {
                     image.close()
                     capturing = false
@@ -261,6 +274,7 @@ class CatCamService : LifecycleService() {
 
             override fun onError(exception: ImageCaptureException) {
                 CatCamState.status.value = "שגיאה בצילום: ${exception.message}"
+                if (!manual) lastCaptureAt = 0L
                 capturing = false
             }
         })
@@ -269,6 +283,8 @@ class CatCamService : LifecycleService() {
     override fun onDestroy() {
         CatCamState.running.value = false
         CatCamState.catConfidence.value = 0f
+        CatCamState.catDetected.value = false
+        CatCamState.nextCaptureAt.value = 0L
         CatCamState.status.value = "המצלמה כבויה"
         orientationListener.disable()
         cameraProvider?.unbindAll()
@@ -285,9 +301,11 @@ class CatCamService : LifecycleService() {
         const val ACTION_SNAPSHOT = "com.yungerman.catcam.SNAPSHOT"
         private const val CHANNEL_ID = "catcam"
         private const val NOTIFICATION_ID = 1
-        /** Analyze ~2 frames per second: plenty for a cat, easy on the battery. */
-        private const val ANALYZE_INTERVAL_MS = 500L
-        /** Require the cat in 2 consecutive frames to avoid one-off false alarms. */
-        private const val REQUIRED_HITS = 2
+        /** Analyze ~3 frames per second: responsive, still easy on the battery. */
+        private const val ANALYZE_INTERVAL_MS = 350L
+        /** A capture taking longer than this is treated as lost. */
+        private const val CAPTURE_TIMEOUT_MS = 10_000L
+        /** The cat must be away this long before its return counts as a new visit (new beep). */
+        private const val VISIT_GAP_MS = 60_000L
     }
 }

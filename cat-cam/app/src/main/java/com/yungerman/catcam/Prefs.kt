@@ -10,14 +10,15 @@ import java.util.Locale
 class Prefs(context: Context) {
     private val sp = context.getSharedPreferences("catcam", Context.MODE_PRIVATE)
 
-    var cooldownMinutes: Int
-        get() = sp.getInt("cooldownMinutes", 5).coerceIn(0, 30)
-        set(v) = sp.edit { putInt("cooldownMinutes", v.coerceIn(0, 30)) }
+    /** While the cat stays in view, take a photo every this many seconds. */
+    var captureIntervalSeconds: Int
+        get() = snap(sp.getInt("captureIntervalSec", 10), 5, 120)
+        set(v) = sp.edit { putInt("captureIntervalSec", snap(v, 5, 120)) }
 
-    /** Minimum ML Kit confidence (percent) for the "Cat" label. */
+    /** Minimum ML Kit confidence (percent) for the "Cat" label. Any cat seen is our cat. */
     var minConfidence: Int
-        get() = sp.getInt("minConfidence", 70)
-        set(v) = sp.edit { putInt("minConfidence", v.coerceIn(50, 95)) }
+        get() = snap(sp.getInt("minConfidence", 50), 30, 95)
+        set(v) = sp.edit { putInt("minConfidence", snap(v, 30, 95)) }
 
     var useFrontCamera: Boolean
         get() = sp.getBoolean("useFrontCamera", false)
@@ -40,4 +41,7 @@ class Prefs(context: Context) {
     }
 
     private fun today() = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+
+    /** Clamps to range and rounds to the sliders' step of 5 (a Slider crashes on off-step values). */
+    private fun snap(value: Int, min: Int, max: Int) = (Math.round(value / 5f) * 5).coerceIn(min, max)
 }

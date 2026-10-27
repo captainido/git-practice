@@ -31,18 +31,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:stepSize="5"
-        android:valueFrom="50"
+        android:valueFrom="30"
         android:valueTo="95" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="גבוה = פחות התראות שווא, נמוך = פחות פספוסים. 70% מאוזן."
+        android:text="מכל אחוז כזה ומעלה — מצלם. נמוך = לא מפספס את החתול. ברירת מחדל: 50%."
         android:textColor="@color/text_dim"
         android:textSize="12sp" />
 
     <TextView
-        android:id="@+id/cooldownLabel"
+        android:id="@+id/intervalLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
@@ -50,17 +50,17 @@
         android:textSize="15sp" />
 
     <com.google.android.material.slider.Slider
-        android:id="@+id/cooldownSlider"
+        android:id="@+id/intervalSlider"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:stepSize="1"
-        android:valueFrom="0"
-        android:valueTo="30" />
+        android:stepSize="5"
+        android:valueFrom="5"
+        android:valueTo="120" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="כמה זמן לחכות בין צילום לצילום כשהחתול נשאר מול המצלמה."
+        android:text="כל עוד החתול בתמונה האפליקציה ממשיכה לצלם. הצליל מושמע פעם אחת כשהחתול מגיע."
         android:textColor="@color/text_dim"
         android:textSize="12sp" />
 

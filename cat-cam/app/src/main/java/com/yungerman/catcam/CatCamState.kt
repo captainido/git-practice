@@ -13,6 +13,12 @@ object CatCamState {
     /** Latest ML Kit "Cat" confidence (0..1) from the live analysis. */
     val catConfidence = MutableStateFlow(0f)
 
+    /** The same decision the service uses to capture, so the screen never disagrees with it. */
+    val catDetected = MutableStateFlow(false)
+
+    /** Wall-clock time of the next automatic capture while the cat stays in view (0 = none). */
+    val nextCaptureAt = MutableStateFlow(0L)
+
     val detectionsToday = MutableStateFlow(0)
     val lastDetectionTime = MutableStateFlow<String?>(null)
     val lastPhotoUri = MutableStateFlow<Uri?>(null)
