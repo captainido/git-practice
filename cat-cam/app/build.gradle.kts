@@ -9,10 +9,10 @@ android {
 
     defaultConfig {
         applicationId = "com.yungerman.catcam"
-        minSdk = 26
+        minSdk = 29
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "2.0"
 
         // Real phones only (ARM); drops emulator code and halves the APK size.
         ndk {
@@ -44,6 +44,12 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    // Compressed APK: this app is sideloaded, so download size matters more than install size.
+    packaging {
+        jniLibs.useLegacyPackaging = true
+        dex.useLegacyPackaging = true
+    }
 }
 
 dependencies {
@@ -56,6 +62,7 @@ dependencies {
     implementation("androidx.camera:camera-core:$camerax")
     implementation("androidx.camera:camera-camera2:$camerax")
     implementation("androidx.camera:camera-lifecycle:$camerax")
+    implementation("androidx.camera:camera-view:$camerax")
     implementation("com.google.mlkit:image-labeling:17.0.9")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }

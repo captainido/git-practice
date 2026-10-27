@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layoutDirection="rtl"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="32dp"
+    tools:ignore="HardcodedText">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="הגדרות"
+        android:textColor="@color/text"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/confidenceLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:textColor="@color/text"
+        android:textSize="15sp" />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/confidenceSlider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stepSize="5"
+        android:valueFrom="50"
+        android:valueTo="95" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="גבוה = פחות התראות שווא, נמוך = פחות פספוסים. 70% מאוזן."
+        android:textColor="@color/text_dim"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/cooldownLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:textColor="@color/text"
+        android:textSize="15sp" />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/cooldownSlider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stepSize="1"
+        android:valueFrom="0"
+        android:valueTo="30" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="כמה זמן לחכות בין צילום לצילום כשהחתול נשאר מול המצלמה."
+        android:textColor="@color/text_dim"
+        android:textSize="12sp" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/soundSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="צליל בזיהוי"
+        android:textSize="15sp" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/frontCameraSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="מצלמה קדמית"
+        android:textSize="15sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/batteryButton"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="הגדרות סוללה (מומלץ: ללא הגבלה)" />
+</LinearLayout>
