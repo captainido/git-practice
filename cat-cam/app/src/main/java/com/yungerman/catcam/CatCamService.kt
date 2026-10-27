@@ -16,6 +16,7 @@ import android.view.OrientationEventListener
 import android.view.Surface
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.graphics.RectF
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -56,6 +57,7 @@ class CatCamService : LifecycleService() {
 
     /** Created and used on the analysis thread only. */
     private var detector: CatDetector? = null
+    private var identifier: CatIdentifier? = null
 
     /** Keeps photos upright whichever way the phone is propped up. */
     private val orientationListener by lazy {
@@ -203,10 +205,9 @@ class CatCamService : LifecycleService() {
         }
         lastAnalyzedAt = now
 
-        val (frame, result) = try {
+        val (frame, verdict) = try {
             val frame = upright(proxy.toBitmap(), proxy.imageInfo.rotationDegrees)
-            val catDetector = detector ?: CatDetector(this).also { detector = it }
-            frame to catDetector.detect(frame)
+            frame to evaluate(frame)
         } catch (e: Throwable) { // includes native load errors from the detector library
             CatCamState.status.value = "שגיאה בזיהוי: ${e.message}"
             return
@@ -214,23 +215,56 @@ class CatCamService : LifecycleService() {
             proxy.close()
         }
 
-        // A hit needs a confident score AND a real-sized cat (tiny boxes are usually noise).
-        val box = result.box
-        val bigEnough = box != null && box.width() * box.height() >= MIN_BOX_AREA
-        val hit = bigEnough && Math.round(result.score * 100) >= prefs.detectionThreshold
-        recentHits.addLast(hit)
+        recentHits.addLast(verdict.hit)
         if (recentHits.size > CONFIRM_WINDOW) recentHits.removeFirst()
-        val confirmed = recentHits.count { it } >= CONFIRM_REQUIRED
+        // A very strong frame confirms at once; otherwise 2 of the last 3 frames (~0.7 s).
+        val confirmed = verdict.strong || recentHits.count { it } >= CONFIRM_REQUIRED
 
-        CatCamState.catScore.value = result.score
-        CatCamState.catHit.value = hit
+        CatCamState.catScore.value = verdict.score
+        CatCamState.catHit.value = verdict.hit
         CatCamState.catConfirmed.value = confirmed
         // The live view is portrait; only draw the box when the analysis frame matches it.
-        CatCamState.catBox.value = if (box != null && analysisRotation == Surface.ROTATION_0) {
-            CatCamState.CatBox(box, frame.width.toFloat() / frame.height, result.score)
+        CatCamState.catBox.value = if (verdict.box != null && analysisRotation == Surface.ROTATION_0) {
+            CatCamState.CatBox(verdict.box, frame.width.toFloat() / frame.height, verdict.score)
         } else null
 
-        if (confirmed) onCatConfirmed(result.score) else CatCamState.nextCaptureAt.value = 0L
+        if (confirmed) onCatConfirmed(verdict.score) else CatCamState.nextCaptureAt.value = 0L
+    }
+
+    private class Verdict(val score: Float, val box: RectF?, val hit: Boolean, val strong: Boolean)
+
+    /**
+     * The detector proposes a candidate, a zoomed re-check sharpens its score, and the fingerprint
+     * decides whether it is our cat. Thresholds were tuned on the owner's 9 photos: all cat views
+     * pass (incl. from behind and far away) and 0 of 34 non-cat objects do (incl. a gray slipper).
+     */
+    private fun evaluate(frame: Bitmap): Verdict {
+        val catDetector = detector ?: CatDetector(this).also { detector = it }
+        val catIdentifier = identifier ?: CatIdentifier(this).also { identifier = it }
+
+        val found = catDetector.detect(frame)
+        val box = found.box?.takeIf { it.width() * it.height() >= MIN_BOX_AREA }
+            ?: return Verdict(found.score, found.box, hit = false, strong = false)
+
+        // Far or small cats score much higher up close (a far cat went from 50% to 89%).
+        val score = if (found.score >= STRONG_SCORE) found.score
+        else maxOf(found.score, catDetector.detect(crop(frame, box, ZOOM_GROW, ZOOM_MIN_SIDE)).score)
+        val similarity = catIdentifier.similarity(crop(frame, box, ID_GROW, 0f))
+
+        val hit = (score >= 0.50f && similarity >= 0.30f) || (score >= 0.25f && similarity >= 0.40f)
+        val strong = score >= STRONG_SCORE && similarity >= 0.40f
+        return Verdict(score, box, hit, strong)
+    }
+
+    /** Crops [box] (normalized) grown by [grow] around its center, at least [minSide] of the frame. */
+    private fun crop(frame: Bitmap, box: RectF, grow: Float, minSide: Float): Bitmap {
+        val w = maxOf(box.width() * grow, minSide)
+        val h = maxOf(box.height() * grow, minSide)
+        val left = ((box.centerX() - w / 2).coerceAtLeast(0f) * frame.width).toInt()
+        val top = ((box.centerY() - h / 2).coerceAtLeast(0f) * frame.height).toInt()
+        val right = ((box.centerX() + w / 2).coerceAtMost(1f) * frame.width).toInt()
+        val bottom = ((box.centerY() + h / 2).coerceAtMost(1f) * frame.height).toInt()
+        return Bitmap.createBitmap(frame, left, top, (right - left).coerceAtLeast(1), (bottom - top).coerceAtLeast(1))
     }
 
     private fun upright(bitmap: Bitmap, rotationDegrees: Int): Bitmap {
@@ -313,8 +347,11 @@ class CatCamService : LifecycleService() {
         orientationListener.disable()
         cameraProvider?.unbindAll()
         toneGenerator?.release()
-        // Close the detector on its own thread, after any detection still running there.
-        analysisExecutor.execute { detector?.close() }
+        // Close the models on their own thread, after any analysis still running there.
+        analysisExecutor.execute {
+            detector?.close()
+            identifier?.close()
+        }
         analysisExecutor.shutdown()
         captureExecutor.shutdown()
         wakeLock?.let { if (it.isHeld) it.release() }
@@ -332,10 +369,17 @@ class CatCamService : LifecycleService() {
         private const val CAPTURE_TIMEOUT_MS = 10_000L
         /** The cat must be away this long before its return counts as a new visit (new beep). */
         private const val VISIT_GAP_MS = 60_000L
-        /** Confirmation: the cat must pass in [CONFIRM_REQUIRED] of the last [CONFIRM_WINDOW] frames (~1 s). */
-        private const val CONFIRM_WINDOW = 4
-        private const val CONFIRM_REQUIRED = 3
-        /** Ignore detections covering less than 1.5% of the frame. */
-        private const val MIN_BOX_AREA = 0.015f
+        /** Confirmation: a strong frame, or hits in [CONFIRM_REQUIRED] of the last [CONFIRM_WINDOW] frames. */
+        private const val CONFIRM_WINDOW = 3
+        private const val CONFIRM_REQUIRED = 2
+        /** Detector score that (with a good fingerprint) confirms in a single frame; also skips the zoom. */
+        private const val STRONG_SCORE = 0.70f
+        /** Ignore specks covering less than 0.3% of the frame. */
+        private const val MIN_BOX_AREA = 0.003f
+        /** Zoom re-check: 2x the candidate box, at least 35% of the frame per side. */
+        private const val ZOOM_GROW = 2.0f
+        private const val ZOOM_MIN_SIDE = 0.35f
+        /** Fingerprint crop: the candidate box plus a 20% margin (as used for the reference photos). */
+        private const val ID_GROW = 1.2f
     }
 }

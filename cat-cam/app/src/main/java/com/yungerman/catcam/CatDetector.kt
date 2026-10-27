@@ -10,9 +10,9 @@ import com.google.mediapipe.tasks.vision.objectdetector.ObjectDetector
 import java.io.Closeable
 
 /**
- * Finds cats with an on-device object detector (EfficientDet-Lite2, COCO classes).
- * Unlike whole-image labeling, it localizes the cat, so blankets or pillows that merely
- * "look cat-like" overall don't score high.
+ * Finds cat candidates with an on-device object detector (EfficientDet-Lite2, COCO classes).
+ * The low score threshold is deliberate: it only proposes candidates, and [CatIdentifier]
+ * decides whether a candidate really is our cat.
  */
 class CatDetector(context: Context) : Closeable {
 
@@ -24,7 +24,7 @@ class CatDetector(context: Context) : Closeable {
         ObjectDetector.ObjectDetectorOptions.builder()
             .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_ASSET).build())
             .setRunningMode(RunningMode.IMAGE)
-            .setScoreThreshold(0.2f)
+            .setScoreThreshold(0.05f)
             .setMaxResults(3)
             .setCategoryAllowlist(listOf("cat"))
             .build()

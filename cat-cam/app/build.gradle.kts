@@ -11,8 +11,8 @@ android {
         applicationId = "com.yungerman.catcam"
         minSdk = 29
         targetSdk = 35
-        versionCode = 5
-        versionName = "2.2"
+        versionCode = 6
+        versionName = "2.3"
 
         // 64-bit ARM only: MediaPipe ships no 32-bit library, so a 32-bit phone should be
         // refused at install time rather than crash at the first detection.

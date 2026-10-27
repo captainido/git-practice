@@ -205,11 +205,11 @@ class MainActivity : AppCompatActivity() {
         val secondsToNext = ((d.nextCaptureAt - System.currentTimeMillis() + 999) / 1000).coerceAtLeast(0)
         detectionChip.visibility = View.VISIBLE
         detectionChip.text = when {
-            d.confirmed && secondsToNext > 0 -> "🐱  חתול זוהה · $percent% · צילום הבא בעוד $secondsToNext ש׳"
-            d.confirmed -> "🐱  חתול זוהה · $percent% · מצלם"
-            d.hit -> "מאמת חתול… $percent%"
-            percent > 0 -> "מחפש חתול… ($percent%)"
-            else -> "מחפש חתול…"
+            d.confirmed && secondsToNext > 0 -> "🐱  זה הוא! · $percent% · צילום הבא בעוד $secondsToNext ש׳"
+            d.confirmed -> "🐱  זה הוא! · $percent% · מצלם"
+            d.hit -> "מאמת שזה הוא… $percent%"
+            percent >= 20 -> "בודק… ($percent%)"
+            else -> "מחפש את החתול…"
         }
         detectionChip.setBackgroundResource(
             when {
@@ -252,15 +252,6 @@ class MainActivity : AppCompatActivity() {
     private fun showSettings() {
         val dialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.sheet_settings, null)
-
-        val confidenceLabel = view.findViewById<TextView>(R.id.confidenceLabel)
-        val confidenceSlider = view.findViewById<Slider>(R.id.confidenceSlider)
-        confidenceSlider.value = prefs.detectionThreshold.toFloat()
-        confidenceLabel.text = "רף ביטחון לזיהוי: ${prefs.detectionThreshold}%"
-        confidenceSlider.addOnChangeListener { _, value, _ ->
-            prefs.detectionThreshold = value.toInt()
-            confidenceLabel.text = "רף ביטחון לזיהוי: ${value.toInt()}%"
-        }
 
         val intervalLabel = view.findViewById<TextView>(R.id.intervalLabel)
         val intervalSlider = view.findViewById<Slider>(R.id.intervalSlider)
