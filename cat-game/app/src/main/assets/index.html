@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>החתול שלי</title>
+<style>
+:root{
+  --ink:#3a2e2a; --muted:#8a7a72; --card:#fffaf3; --accent:#ff8c42; --accent2:#ffb36b;
+  --good:#4caf50; --warn:#ffb300; --bad:#e53935; --sky:#9fd8ff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#ffe7cc;color:var(--ink);
+  font-family:"Rubik","Assistant","Noto Sans Hebrew",system-ui,sans-serif}
+button{font-family:inherit;color:inherit}
+#app{display:flex;flex-direction:column;height:100%}
+
+/* ---------- top bar ---------- */
+#top{display:flex;align-items:center;gap:10px;padding:8px 12px 4px;background:linear-gradient(#ffb36b,#ffc98f)}
+#avatar{width:44px;height:44px;border-radius:50%;border:3px solid #fff;object-fit:cover;box-shadow:0 2px 6px #0003}
+#who{flex:1;min-width:0}
+#catName{font-weight:800;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lvlRow{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
+#xpBar{flex:1;height:7px;background:#fff8;border-radius:9px;overflow:hidden;max-width:120px}
+#xpFill{height:100%;background:#7c4dff;width:0;transition:width .4s}
+.pill{background:#fff;border-radius:20px;padding:5px 10px;font-weight:800;font-size:15px;box-shadow:0 2px 4px #0002;border:none}
+.iconBtn{width:40px;height:40px;border-radius:50%;border:none;background:#fff;font-size:20px;box-shadow:0 2px 4px #0002;position:relative}
+.badge{position:absolute;top:-3px;left:-3px;background:var(--bad);color:#fff;border-radius:10px;font-size:11px;min-width:18px;height:18px;line-height:18px;font-weight:800;display:none}
+
+/* ---------- stats ---------- */
+#stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px 10px;background:#ffc98f}
+.stat{background:#fff;border-radius:12px;padding:4px 6px;box-shadow:0 1px 3px #0002;text-align:center}
+.stat .lbl{font-size:11px;font-weight:700;color:var(--muted)}
+.stat .bar{height:8px;background:#eee;border-radius:9px;overflow:hidden;margin-top:3px}
+.stat .fill{height:100%;border-radius:9px;transition:width .5s,background .5s}
+.stat.low{animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.06);box-shadow:0 0 0 3px #e5393555}}
+
+/* ---------- scene ---------- */
+#scene{position:relative;flex:1;overflow:hidden;touch-action:none}
+.wall{position:absolute;inset:0 0 34% 0;transition:background .6s}
+.floor{position:absolute;inset:66% 0 0 0;transition:background .6s}
+.floor::before{content:"";position:absolute;inset:0 0 auto 0;height:8px;background:#0001}
+.room-living .wall{background:repeating-linear-gradient(90deg,#fde3c5 0 38px,#fbd9b4 38px 76px)}
+.room-living .floor{background:repeating-linear-gradient(90deg,#c98e5a 0 60px,#bf8550 60px 62px)}
+.room-kitchen .wall{background:#d8f1ec;background-image:linear-gradient(#ffffff55 2px,transparent 2px),linear-gradient(90deg,#ffffff55 2px,transparent 2px);background-size:34px 34px}
+.room-kitchen .floor{background:repeating-conic-gradient(#f5f5f5 0 25%,#d9d9d9 0 50%) 0 0/48px 48px}
+.room-bedroom .wall{background:#d7d3f5}
+.room-bedroom .floor{background:repeating-linear-gradient(90deg,#a8795a 0 70px,#9e6f50 70px 72px)}
+.room-bath .wall{background:#cfeeff;background-image:linear-gradient(#ffffff88 2px,transparent 2px),linear-gradient(90deg,#ffffff88 2px,transparent 2px);background-size:28px 28px}
+.room-bath .floor{background:repeating-conic-gradient(#e8f6ff 0 25%,#bfe3f7 0 50%) 0 0/40px 40px}
+
+.window{position:absolute;top:8%;width:30%;aspect-ratio:1.1;border:7px solid #fff;border-radius:10px;background:var(--sky);overflow:hidden;box-shadow:0 3px 8px #0002}
+.window::before,.window::after{content:"";position:absolute;background:#fff}
+.window::before{left:50%;top:0;bottom:0;width:6px;transform:translateX(-50%)}
+.window::after{top:50%;left:0;right:0;height:6px;transform:translateY(-50%)}
+.window .orb{position:absolute;width:28%;aspect-ratio:1;border-radius:50%;top:14%;right:14%}
+.day .window{background:linear-gradient(#7ec8ff,#c9ecff)}
+.day .window .orb{background:#ffe066;box-shadow:0 0 18px #ffd000}
+.night .window{background:linear-gradient(#0b1640,#26306b)}
+.night .window .orb{background:#f4f1c9;box-shadow:0 0 14px #fff8;}
+.prop{position:absolute;pointer-events:none;line-height:1}
+.tap{pointer-events:auto}
+
+/* cat */
+#cat{position:absolute;bottom:6%;height:56%;aspect-ratio:611/1100;transform:translateX(-50%);transition:left .9s ease-in-out,bottom .6s,height .6s;z-index:5;touch-action:none}
+#catInner{position:absolute;inset:0;transform-origin:50% 100%;animation:breathe 3.2s ease-in-out infinite}
+#catImg{width:100%;height:100%;display:block;pointer-events:none;filter:drop-shadow(0 6px 4px #0003)}
+#cat .shadow{position:absolute;bottom:-3%;left:5%;right:5%;height:7%;background:radial-gradient(#0004,transparent 70%);z-index:-1}
+.lid{position:absolute;border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#c3c7cf 0 55%,#b4b8c1 70%,#b4b8c100 76%);transform:scaleY(0);transform-origin:50% 20%;transition:transform .12s}
+.lid::after{content:"";position:absolute;left:12%;right:12%;top:46%;height:28%;border-bottom:3px solid #4a4a55;border-radius:0 0 50% 50%}
+#lidL{left:42.7%;top:17.2%;width:13.4%;height:5.6%}
+#lidR{left:71.1%;top:19.9%;width:11.1%;height:5.3%}
+#cat.blink .lid,#cat.closed .lid{transform:scaleY(1)}
+#acc{position:absolute;pointer-events:none;transform:translate(-50%,-50%);line-height:1}
+@keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.012,1.022)}}
+#cat.walk #catInner{animation:hop .3s ease-in-out infinite}
+@keyframes hop{50%{transform:translateY(-5%) rotate(-2deg)}}
+#cat.eat #catInner{animation:nom .45s ease-in-out infinite}
+@keyframes nom{50%{transform:translateY(3%) rotate(4deg) scale(1.02,.97)}}
+#cat.happy #catInner{animation:jump .55s ease-out 2}
+@keyframes jump{30%{transform:translateY(-18%) scale(.96,1.05)}60%{transform:translateY(0) scale(1.06,.94)}}
+#cat.wiggle #catInner{animation:wig .25s ease-in-out infinite}
+@keyframes wig{25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+#cat.held{transition:none;z-index:30}
+#cat.held #catInner{animation:dangle .6s ease-in-out infinite;transform-origin:50% 0}
+@keyframes dangle{50%{transform:rotate(5deg)}}
+#cat.sleep #catInner{animation:sleepb 4s ease-in-out infinite}
+@keyframes sleepb{50%{transform:scale(1.02,1.035)}}
+#cat.flip #catInner{scale:-1 1}
+#cat.angry #catInner{animation:shake .12s linear 6}
+@keyframes shake{25%{transform:translateX(-4%)}75%{transform:translateX(4%)}}
+
+#bubble{position:absolute;z-index:20;background:#fff;border-radius:18px;padding:8px 13px;font-weight:700;font-size:15px;box-shadow:0 3px 10px #0003;max-width:62%;transform:translate(-50%,-100%) scale(0);transform-origin:50% 100%;transition:transform .25s cubic-bezier(.3,1.6,.6,1);pointer-events:none;text-align:center}
+#bubble.show{transform:translate(-50%,-100%) scale(1)}
+#bubble::after{content:"";position:absolute;bottom:-9px;left:50%;margin-left:-9px;border:9px solid transparent;border-bottom:0;border-top-color:#fff}
+#needs{position:absolute;top:8px;left:8px;display:flex;gap:4px;z-index:21}
+#needs span{background:#fff;border-radius:50%;width:32px;height:32px;display:grid;place-items:center;font-size:18px;box-shadow:0 2px 5px #0003;animation:bob 1.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}
+
+#dark{position:absolute;inset:0;background:radial-gradient(circle at 78% 40%,#ffd36b33,#0a1030cc 45%);opacity:0;pointer-events:none;transition:opacity 1.2s;z-index:12}
+#dark.on{opacity:1}
+#blanket{position:absolute;z-index:6;display:none;pointer-events:none}
+
+.fx{position:absolute;pointer-events:none;z-index:25;font-size:24px;animation:floatUp 1.4s ease-out forwards}
+@keyframes floatUp{0%{transform:translate(-50%,0) scale(.5);opacity:0}15%{opacity:1;transform:translate(-50%,-10px) scale(1.1)}100%{transform:translate(calc(-50% + var(--dx,0px)),-110px) scale(.9);opacity:0}}
+.zzz{position:absolute;z-index:14;pointer-events:none;font-weight:900;color:#fff;text-shadow:0 0 6px #66f;animation:zz 2.4s ease-out forwards}
+@keyframes zz{0%{opacity:0;transform:translate(0,0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translate(-40px,-90px) scale(1.5)}}
+
+#tut{position:absolute;top:8px;right:8px;left:auto;max-width:70%;background:#7c4dffee;color:#fff;border-radius:14px;padding:7px 11px;font-size:13px;font-weight:700;z-index:22;box-shadow:0 3px 8px #0003;display:none}
+#tut b{display:block;font-size:11px;opacity:.85}
+#toast{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%) scale(.6);background:#3a2e2aee;color:#fff;padding:10px 18px;border-radius:16px;font-weight:800;z-index:60;opacity:0;transition:.25s;pointer-events:none;text-align:center;max-width:80%}
+#toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+/* ---------- action bar & tabs ---------- */
+#actions{display:flex;gap:8px;padding:8px 10px;overflow-x:auto;background:#fff3e3;min-height:74px;align-items:center;scrollbar-width:none}
+#actions::-webkit-scrollbar{display:none}
+.act{flex:0 0 auto;border:none;background:#fff;border-radius:16px;padding:6px 10px;min-width:72px;box-shadow:0 2px 5px #0002;font-weight:700;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.act .e{font-size:26px;line-height:1.1}
+.act .c{font-size:10px;color:var(--muted)}
+.act:active{transform:scale(.93)}
+.act.sel{outline:3px solid var(--accent)}
+.act[disabled]{opacity:.45}
+#tabs{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;box-shadow:0 -2px 8px #0001}
+.tab{border:none;background:none;padding:6px 0 8px;font-size:12px;font-weight:700;color:var(--muted);display:flex;flex-direction:column;align-items:center;position:relative}
+.tab .e{font-size:24px;filter:grayscale(.6);transition:.2s}
+.tab.on{color:var(--accent)}
+.tab.on .e{filter:none;transform:translateY(-2px) scale(1.12)}
+.tab .dot{position:absolute;top:4px;left:calc(50% - 22px);width:10px;height:10px;border-radius:50%;background:var(--bad);display:none}
+
+/* ---------- modals ---------- */
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;justify-content:center;z-index:100}
+.modal.open{display:flex}
+.sheet{background:var(--card);width:100%;max-width:520px;max-height:86%;border-radius:22px 22px 0 0;padding:16px;overflow:auto;animation:up .25s ease-out}
+.center .sheet{border-radius:22px;align-self:center;width:90%;animation:pop .3s cubic-bezier(.3,1.5,.6,1)}
+@keyframes up{from{transform:translateY(60%)}}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.sheet h2{margin:0 0 10px;font-size:20px;display:flex;justify-content:space-between;align-items:center}
+.x{border:none;background:#eee;border-radius:50%;width:34px;height:34px;font-size:16px}
+.mission{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px #0001}
+.mission .e{font-size:28px}
+.mission .t{flex:1;font-weight:700;font-size:14px}
+.mission .p{height:7px;background:#eee;border-radius:9px;overflow:hidden;margin-top:5px}
+.mission .p i{display:block;height:100%;background:var(--good)}
+.mission .r{font-size:12px;color:var(--muted);font-weight:700}
+.btn{border:none;border-radius:14px;padding:10px 14px;font-weight:800;font-size:15px;background:var(--accent);color:#fff;box-shadow:0 3px 0 #d96a1f}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #d96a1f}
+.btn.gray{background:#ccc;box-shadow:0 3px 0 #aaa}
+.btn.small{padding:7px 11px;font-size:13px}
+.done{color:var(--good);font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.item{background:#fff;border-radius:14px;padding:8px;text-align:center;box-shadow:0 1px 4px #0001;font-size:13px;font-weight:700}
+.item .e{font-size:34px}
+.item .btn{margin-top:6px;width:100%;padding:6px}
+.sub{font-weight:800;margin:14px 0 8px;color:var(--muted);font-size:14px}
+input[type=text]{width:100%;font-size:20px;padding:10px 12px;border-radius:12px;border:2px solid #ffc98f;font-family:inherit;text-align:center;user-select:text;-webkit-user-select:text}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:8px 0}
+.photo{width:100%;border-radius:18px;display:block;box-shadow:0 4px 12px #0003}
+.statsList div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #e8d8c8;font-weight:600}
+
+/* ---------- mini games ---------- */
+#game{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;background:#2b2233}
+#game.open{display:flex}
+#gHud{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:#fff;font-weight:800;font-size:18px}
+#gArea{position:relative;flex:1;overflow:hidden;touch-action:none}
+#gHint{position:absolute;top:10px;left:0;right:0;text-align:center;color:#fff9;font-weight:700;pointer-events:none}
+.laserDot{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:radial-gradient(#fff 0 20%,#ff1a1a 45%,#ff000000 72%);box-shadow:0 0 18px 6px #ff000088;pointer-events:none}
+.miniCat{position:absolute;height:120px;aspect-ratio:611/1100;margin:-120px 0 0 -33px;pointer-events:none;transition:transform .1s}
+.miniCat img{width:100%;height:100%}
+.hole{position:absolute;width:26%;aspect-ratio:1.6;border-radius:50%;background:radial-gradient(#1a120e 55%,#5b3d2b 60%,#7a5238 70%);overflow:hidden}
+.mouse{position:absolute;left:0;right:0;bottom:-100%;text-align:center;font-size:52px;transition:bottom .15s;line-height:1.15}
+.mouse.up{bottom:0}
+.mouse.hit{transform:scale(1.3) rotate(20deg);opacity:.4}
+#gArea.mice{background:radial-gradient(circle at 50% 40%,#7cbf5a,#4f8d38)}
+#gArea.laser{background:radial-gradient(circle at 50% 50%,#4b3b55,#231b29)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top">
+    <img id="avatar" src="face.jpg" alt="">
+    <div id="who">
+      <div id="catName">החתול שלי</div>
+      <div id="lvlRow"><span id="lvl">רמה 1</span><div id="xpBar"><div id="xpFill"></div></div></div>
+    </div>
+    <button class="pill" id="coinsBtn">🪙 <span id="coins">0</span></button>
+    <button class="iconBtn" id="missionsBtn">📋<span class="badge" id="mBadge"></span></button>
+    <button class="iconBtn" id="shopBtn">🛒</button>
+    <button class="iconBtn" id="menuBtn">⚙️</button>
+  </div>
+  <div id="stats">
+    <div class="stat" id="st-hunger"><div class="lbl">🍗 שובע</div><div class="bar"><div class="fill"></div></div></div>
+    <div class="stat" id="st-energy"><div class="lbl">⚡ אנרגיה</div><div class="bar"><div class="fill"></div></div></div>
+    <div class="stat" id="st-fun"><div class="lbl">🎾 שמחה</div><div class="bar"><div class="fill"></div></div></div>
+    <div class="stat" id="st-clean"><div class="lbl">🛁 ניקיון</div><div class="bar"><div class="fill"></div></div></div>
+  </div>
+  <div id="scene">
+    <div class="wall"></div><div class="floor"></div>
+    <div id="props"></div>
+    <div id="cat"><div id="catInner"><div class="shadow"></div><img id="catImg" src="cat.webp" alt=""><div class="lid" id="lidL"></div><div class="lid" id="lidR"></div><span id="acc"></span></div></div>
+    <div id="blanket"></div>
+    <div id="dark"></div>
+    <div id="bubble"></div>
+    <div id="needs"></div>
+    <div id="tut"></div>
+    <div id="toast"></div>
+  </div>
+  <div id="actions"></div>
+  <div id="tabs">
+    <button class="tab" data-room="living"><span class="e">🛋️</span>סלון<i class="dot"></i></button>
+    <button class="tab" data-room="kitchen"><span class="e">🍽️</span>מטבח<i class="dot"></i></button>
+    <button class="tab" data-room="bedroom"><span class="e">🛏️</span>חדר שינה<i class="dot"></i></button>
+    <button class="tab" data-room="bath"><span class="e">🛁</span>מקלחת<i class="dot"></i></button>
+  </div>
+</div>
+
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+
+<div id="game">
+  <div id="gHud"><span id="gScore">0</span><span id="gTitle"></span><span id="gTime">⏱ 25</span></div>
+  <div id="gArea"><div id="gHint"></div></div>
+</div>
+
+<script>
+"use strict";
+/* ================= data ================= */
+const FOODS = {
+  dry:   {e:'🥣', name:'אוכל יבש', hunger:25, fun:0,  price:0,  free:true},
+  wet:   {e:'🥫', name:'פאוץ׳ רטוב', hunger:40, fun:6, price:5},
+  tuna:  {e:'🐟', name:'טונה', hunger:50, fun:15, price:12},
+  treat: {e:'🍤', name:'חטיף', hunger:10, fun:20, price:6},
+  milk:  {e:'🥛', name:'חלב לחתולים', hunger:15, fun:10, price:4}
+};
+const ACCS = {
+  bow:     {e:'🎀', name:'פפיון', price:30, lvl:1, x:.62, y:.405, s:.32, r:0},
+  flower:  {e:'🌸', name:'פרח', price:25, lvl:1, x:.86, y:.12, s:.24, r:15},
+  glasses: {e:'🕶️', name:'משקפי שמש', price:40, lvl:2, x:.635, y:.215, s:.42, r:9},
+  hat:     {e:'🎩', name:'מגבעת', price:50, lvl:2, x:.6, y:.035, s:.42, r:6},
+  cap:     {e:'🧢', name:'כובע מצחייה', price:45, lvl:3, x:.6, y:.05, s:.4, r:-8},
+  crown:   {e:'👑', name:'כתר', price:90, lvl:4, x:.6, y:.04, s:.4, r:6}
+};
+const MISSIONS = [
+  {id:'feed3', e:'🍽️', t:n=>`האכל את ${n} 3 פעמים`, goal:3, key:'feed', coins:15},
+  {id:'treat', e:'🍤', t:n=>`פנק את ${n} בחטיף`, goal:1, key:'treat', coins:10},
+  {id:'pet20', e:'💕', t:n=>`לטף את ${n} 20 פעמים`, goal:20, key:'pet', coins:12},
+  {id:'sleep', e:'😴', t:n=>`השכב את ${n} לישון במיטה`, goal:1, key:'sleep', coins:12},
+  {id:'laser', e:'🔴', t:()=>`שחקו במשחק הלייזר`, goal:1, key:'laser', coins:12},
+  {id:'mice10', e:'🐭', t:()=>`תפוס 10 עכברים במשחק אחד`, goal:10, key:'miceBest', coins:20, max:true},
+  {id:'games2', e:'🎮', t:()=>`שחקו 2 משחקים`, goal:2, key:'games', coins:15},
+  {id:'litter', e:'🧹', t:()=>`נקה את ארגז החול`, goal:1, key:'litter', coins:10},
+  {id:'brush', e:'🪮', t:n=>`הברש את הפרווה של ${n}`, goal:15, key:'brush', coins:12},
+  {id:'yarn3', e:'🧶', t:()=>`זרוק כדור צמר 3 פעמים`, goal:3, key:'yarn', coins:10},
+  {id:'allgood', e:'🌟', t:()=>`הבא את כל המדדים מעל 80`, goal:1, key:'allgood', coins:25},
+  {id:'water', e:'💧', t:()=>`מלא מים טריים`, goal:1, key:'water', coins:8}
+];
+const TUTORIAL = [
+  {key:'feed', goal:1, t:n=>`${n} רעב! לך למטבח 🍽️ ותן לו אוכל`, room:'kitchen'},
+  {key:'pet', goal:5, t:n=>`העבר אצבע על ${n} כדי ללטף אותו 💕`},
+  {key:'yarn', goal:1, t:()=>`בסלון 🛋️ זרוק לו כדור צמר 🧶`, room:'living'},
+  {key:'sleep', goal:1, t:n=>`בחדר השינה 🛏️ השכב את ${n} לישון`, room:'bedroom'},
+  {key:'mission', goal:1, t:()=>`פתח את המשימות 📋 וקבל פרס יומי`}
+];
+const HAPPY_LINES = ['פררר... 💕','אני הכי יפה בבית 😼','מיאו!','אוהב אותך 🧡','מה נעשה עכשיו?','ליטופים בבקשה 🥺','*מתמתח*','אני מלך הסלון 👑','ראית ציפור בחלון? 🐦'];
+const RATE = {hunger:14, energy:7, fun:10, clean:4}; // per hour while awake
+const SLEEP_GAIN = 0.6; // energy per second while sleeping
+
+/* ================= state ================= */
+const KEY='catgame.v1';
+let S;
+function fresh(){
+  const now=Date.now();
+  return {v:1,name:'',created:now,last:now,hunger:45,energy:80,fun:70,clean:85,
+    coins:25,xp:0,level:1,poop:0,poopMeter:0,water:60,sleeping:false,acc:null,owned:[],
+    inv:{wet:2,tuna:1,treat:2,milk:1},sound:true,room:'kitchen',
+    total:{feed:0,pet:0,games:0,sleep:0,litter:0,coins:0},
+    day:null,tut:0,tutProg:0,streak:0,lastDay:null,bestMice:0,bestLaser:0};
+}
+function load(){
+  try{const raw=localStorage.getItem(KEY); if(raw){S=Object.assign(fresh(),JSON.parse(raw));return;}}catch(e){}
+  S=fresh();
+}
+function save(){
+  S.last=Date.now();
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+  scheduleNotify();
+}
+const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
+const $=id=>document.getElementById(id);
+const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};
+const isNight=()=>{const h=new Date().getHours();return h>=21||h<6;};
+
+/* ================= android bridge ================= */
+const NATIVE=window.Android||null;
+function scheduleNotify(){
+  if(!NATIVE||!S.name) return;
+  try{
+    const perH = S.sleeping?RATE.hunger/2:RATE.hunger;
+    let secs = S.hunger>30 ? (S.hunger-30)/perH*3600 : 3*3600;
+    NATIVE.scheduleHungry(Math.max(60,Math.round(secs)), S.name);
+  }catch(e){}
+}
+function vibrate(ms){try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}}
+
+/* ================= audio ================= */
+let AC=null;
+function ac(){ if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}} if(AC&&AC.state==='suspended')AC.resume(); return AC;}
+function tone(freq,dur,type='sine',vol=.15,slideTo){
+  if(!S.sound) return; const a=ac(); if(!a) return;
+  const o=a.createOscillator(),g=a.createGain(),t=a.currentTime;
+  o.type=type;o.frequency.setValueAtTime(freq,t);
+  if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+.05);
+}
+function meow(sad){
+  if(!S.sound) return; const a=ac(); if(!a) return;
+  const t=a.currentTime,o=a.createOscillator(),f=a.createBiquadFilter(),g=a.createGain();
+  o.type='sawtooth'; const base=sad?420:560;
+  o.frequency.setValueAtTime(base,t);o.frequency.linearRampToValueAtTime(base*1.6,t+.18);o.frequency.linearRampToValueAtTime(base*(sad?.75:1.05),t+.55);
+  f.type='bandpass';f.Q.value=4;f.frequency.setValueAtTime(700,t);f.frequency.linearRampToValueAtTime(1700,t+.2);f.frequency.linearRampToValueAtTime(900,t+.55);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.35,t+.06);g.gain.linearRampToValueAtTime(.25,t+.35);g.gain.exponentialRampToValueAtTime(.001,t+.6);
+  o.connect(f).connect(g).connect(a.destination);o.start(t);o.stop(t+.65);
+}
+let purrNode=null;
+function purr(on){
+  const a=S.sound&&ac(); if(!a) return;
+  if(on&&!purrNode){
+    const len=a.sampleRate*2,buf=a.createBuffer(1,len,a.sampleRate),d=buf.getChannelData(0);
+    for(let i=0;i<len;i++){const ph=(i/a.sampleRate)*26%1;d[i]=(Math.random()*2-1)*(ph<.45?1:.15);}
+    const src=a.createBufferSource();src.buffer=buf;src.loop=true;
+    const f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=180;
+    const g=a.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.5,a.currentTime+.3);
+    src.connect(f).connect(g).connect(a.destination);src.start();purrNode={src,g};
+  }else if(!on&&purrNode){const p=purrNode;purrNode=null;p.g.gain.linearRampToValueAtTime(0,a.currentTime+.4);setTimeout(()=>{try{p.src.stop();}catch(e){}},500);}
+}
+const sfx={
+  coin:()=>{tone(988,.08,'square',.08);setTimeout(()=>tone(1319,.18,'square',.08),80);},
+  pop:()=>tone(600,.1,'sine',.15,1200),
+  crunch:()=>{if(!S.sound)return;const a=ac();if(!a)return;const len=a.sampleRate*.08,b=a.createBuffer(1,len,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);const s=a.createBufferSource();s.buffer=b;const f=a.createBiquadFilter();f.type='highpass';f.frequency.value=1500;const g=a.createGain();g.gain.value=.25;s.connect(f).connect(g).connect(a.destination);s.start();},
+  level:()=>[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.2,'triangle',.15),i*110)),
+  bad:()=>tone(300,.25,'square',.08,150),
+  swish:()=>tone(1200,.15,'sine',.08,400)
+};
+
+/* ================= scene / rooms ================= */
+const ROOMS={
+  living:{home:.5, html:()=>`
+    <div class="window" style="left:8%"><div class="orb"></div></div>
+    <div class="prop" style="right:6%;top:12%;font-size:42px">🖼️</div>
+    <div class="prop" style="right:4%;bottom:26%;font-size:64px">🪴</div>
+    <div class="prop" style="left:6%;bottom:24%;font-size:70px">🛋️</div>
+    <div class="prop" style="left:22%;right:22%;bottom:3%;height:13%;border-radius:50%;background:radial-gradient(#ff9e80,#e57373 60%,#d35b5b);opacity:.85"></div>
+    <div class="prop" id="yarnProp" style="right:18%;bottom:8%;font-size:36px;transition:all .8s cubic-bezier(.3,.8,.4,1)">🧶</div>`},
+  kitchen:{home:.62, bowl:.26, html:()=>`
+    <div class="prop" style="left:0;right:0;top:0;height:30%;background:linear-gradient(#b98b62,#a87a52);border-bottom:6px solid #8a5f3c"></div>
+    <div class="prop" style="left:6%;top:6%;font-size:32px">🍳 🫖</div>
+    <div class="prop" style="right:3%;bottom:32%;font-size:44px">🪴</div>
+    <div class="prop" style="right:6%;top:7%;font-size:30px">🕰️</div>
+    <div class="prop" id="bowl" style="left:26%;bottom:6%;transform:translateX(-50%);width:24%;max-width:120px">${bowlSVG()}<div id="bowlFood" style="position:absolute;left:0;right:0;top:-38%;text-align:center;font-size:26px"></div></div>
+    <div class="prop" style="left:9%;bottom:6%;transform:translateX(-50%);width:15%;max-width:80px">${bowlSVG('#4fc3f7',S.water)}</div>`},
+  bedroom:{home:.24, bed:.66, html:()=>`
+    <div class="window" style="right:8%"><div class="orb"></div></div>
+    <div class="prop" style="left:6%;top:14%;font-size:38px">🌙</div>
+    <div class="prop" style="left:5%;bottom:30%;font-size:56px">🪔</div>
+    <div class="prop" id="bed" style="left:66%;bottom:3%;transform:translateX(-50%);width:62%;max-width:330px">${bedSVG()}</div>`},
+  bath:{home:.46, html:()=>`
+    <div class="prop" style="left:4%;bottom:24%;font-size:96px">🛁</div>
+    <div class="prop" style="left:8%;top:9%;font-size:40px">🪞</div>
+    <div class="prop" style="right:8%;top:10%;font-size:34px">🧴🧻</div>
+    <div class="prop tap" id="litter" style="right:6%;bottom:5%;width:34%;max-width:170px">${litterSVG()}<div id="poops" style="position:absolute;left:8%;right:8%;top:6%;display:flex;justify-content:space-around;font-size:22px"></div></div>`}
+};
+function bowlSVG(col='#ff7043',fill){
+  const w=fill==null?'':`<path d="M14 18 Q50 18 86 18 L80 34 Q50 46 20 34Z" fill="#b3e5fc" opacity="${fill/100}"/>`;
+  return `<svg viewBox="0 0 100 50" style="width:100%;display:block;overflow:visible"><ellipse cx="50" cy="46" rx="44" ry="4" fill="#0002"/>${w}<path d="M6 16 H94 L84 40 Q50 50 16 40Z" fill="${col}"/><ellipse cx="50" cy="16" rx="44" ry="7" fill="#fff" opacity=".35"/><text x="50" y="35" font-size="12" text-anchor="middle" fill="#fff" font-weight="bold">${fill==null?'🐾':'💧'}</text></svg>`;
+}
+function bedSVG(){
+  return `<svg viewBox="0 0 200 110" style="width:100%;display:block">
+   <ellipse cx="100" cy="106" rx="96" ry="5" fill="#0002"/>
+   <rect x="8" y="18" width="20" height="88" rx="6" fill="#8d5a3b"/><rect x="172" y="40" width="20" height="66" rx="6" fill="#8d5a3b"/>
+   <rect x="14" y="60" width="172" height="34" rx="10" fill="#fff"/>
+   <rect x="14" y="80" width="172" height="20" rx="6" fill="#a1683f"/>
+   <ellipse cx="52" cy="58" rx="28" ry="12" fill="#fff" stroke="#e0e0e0" stroke-width="2"/></svg>`;
+}
+function blanketSVG(){
+  return `<svg viewBox="0 0 200 60" style="width:100%;display:block"><path d="M2 14 Q40 0 100 6 Q160 0 198 14 L196 56 Q100 64 4 56Z" fill="#7986cb"/><path d="M2 14 Q40 0 100 6 Q160 0 198 14 L198 22 Q100 12 2 22Z" fill="#9fa8da"/><g fill="#fff" opacity=".5"><circle cx="40" cy="36" r="4"/><circle cx="90" cy="44" r="4"/><circle cx="140" cy="34" r="4"/><circle cx="170" cy="48" r="3"/><circle cx="60" cy="50" r="3"/></g></svg>`;
+}
+function litterSVG(){
+  return `<svg viewBox="0 0 120 60" style="width:100%;display:block"><ellipse cx="60" cy="57" rx="56" ry="4" fill="#0002"/><path d="M4 10 H116 L108 54 H12Z" fill="#26a69a"/><rect x="4" y="6" width="112" height="9" rx="4" fill="#4db6ac"/><path d="M12 15 H108 L106 24 H14Z" fill="#e8d5a8"/></svg>`;
+}
+
+let room='kitchen';
+function setRoom(r,silent){
+  if(S.sleeping && r!=='bedroom'){ /* the cat stays asleep in the bedroom; others rooms are empty */ }
+  room=r; S.room=r;
+  const sc=$('scene');
+  sc.className='room-'+r+' '+(isNight()?'night':'day');
+  $('props').innerHTML=ROOMS[r].html();
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.room===r));
+  const cat=$('cat');
+  cat.style.transition='none';
+  if(S.sleeping){ cat.style.display = r==='bedroom'?'':'none'; }
+  else cat.style.display='';
+  placeCatHome(true);
+  requestAnimationFrame(()=>cat.style.transition='');
+  if(r==='bedroom'&&S.sleeping) putInBed(true); else{ $('blanket').style.display='none'; $('dark').classList.remove('on'); }
+  if(r==='bath') renderPoops();
+  if(r==='living') $('yarnProp').addEventListener('click',throwYarn);
+  if(r==='bath') $('litter').addEventListener('click',cleanLitter);
+  tool=null;
+  renderActions();
+  if(!silent) sfx.swish();
+}
+function placeCatHome(instant){
+  const c=$('cat'); c.classList.remove('flip');
+  catX=ROOMS[room].home; c.style.left=(catX*100)+'%'; c.style.bottom='6%'; c.style.height='56%';
+}
+let catX=.5;
+function walkTo(x,cb){
+  const c=$('cat');
+  if(Math.abs(x-catX)<.02){cb&&cb();return;}
+  c.classList.toggle('flip',x>catX);
+  c.classList.add('walk'); catX=x; c.style.left=(x*100)+'%';
+  setTimeout(()=>{c.classList.remove('walk');c.classList.remove('flip');cb&&cb();},900);
+}
+function sizeCat(){
+  const c=$('cat'),w=c.getBoundingClientRect().width||120;
+  $('acc').style.fontSize=(w*(S.acc?ACCS[S.acc].s:.3))+'px';
+}
+function renderAcc(){
+  const a=$('acc');
+  if(!S.acc){a.textContent='';return;}
+  const d=ACCS[S.acc]; a.textContent=d.e; a.style.left=(d.x*100)+'%'; a.style.top=(d.y*100)+'%';
+  a.style.transform=`translate(-50%,-50%) rotate(${d.r}deg)`; sizeCat();
+}
+
+/* ================= UI rendering ================= */
+function statColor(v){return v>60?'#66bb6a':v>30?'#ffb300':'#e53935';}
+function renderStats(){
+  for(const k of ['hunger','energy','fun','clean']){
+    const el=$('st-'+k),v=S[k];
+    const f=el.querySelector('.fill'); f.style.width=v+'%'; f.style.background=statColor(v);
+    el.classList.toggle('low',v<25);
+  }
+  $('coins').textContent=S.coins;
+  $('catName').textContent=S.name||'החתול שלי';
+  const need=xpNeed(S.level);
+  $('lvl').textContent='רמה '+S.level; $('xpFill').style.width=Math.min(100,S.xp/need*100)+'%';
+  // need icons
+  const n=[]; if(S.hunger<30)n.push('🍗'); if(S.energy<25&&!S.sleeping)n.push('😴'); if(S.fun<30)n.push('🧶'); if(S.clean<30||S.poop>=2)n.push('🧼'); if(S.water<20)n.push('💧');
+  $('needs').innerHTML=n.map(e=>`<span>${e}</span>`).join('');
+  const dots={kitchen:S.hunger<30||S.water<20,bedroom:S.energy<25&&!S.sleeping,living:S.fun<30,bath:S.clean<30||S.poop>=2};
+  document.querySelectorAll('.tab').forEach(t=>t.querySelector('.dot').style.display=dots[t.dataset.room]&&t.dataset.room!==room?'block':'none');
+  const unclaimed=(S.day?S.day.m.filter(m=>!m.c&&m.p>=missionDef(m.id).goal).length:0)+(S.day&&!S.day.bonus?1:0);
+  const b=$('mBadge'); b.style.display=unclaimed?'block':'none'; b.textContent=unclaimed;
+  renderTut();
+}
+let tool=null;
+function renderActions(){
+  const A=$('actions'); let h='';
+  const b=(id,e,t,c='',dis=false)=>`<button class="act${tool===id?' sel':''}" data-a="${id}" ${dis?'disabled':''}><span class="e">${e}</span>${t}${c?`<span class="c">${c}</span>`:''}</button>`;
+  if(S.sleeping && room!=='bedroom'){
+    A.innerHTML=`<div style="font-weight:700;padding:0 6px">💤 ${S.name} ישן בחדר השינה... </div>`+b('goBed','🛏️','לחדר השינה');
+  }else if(room==='kitchen'){
+    for(const [id,f] of Object.entries(FOODS)){
+      const cnt=f.free?'∞':(S.inv[id]||0);
+      h+=b('food:'+id,f.e,f.name,f.free?'חינם':`יש ${cnt}`,!f.free&&!S.inv[id]);
+    }
+    h+=b('water','💧','מים טריים');
+    A.innerHTML=h;
+  }else if(room==='bedroom'){
+    if(S.sleeping) A.innerHTML=b('wake','☀️','להעיר')+`<div style="font-weight:700;font-size:13px;padding:0 6px">💤 ישן... אנרגיה ${Math.round(S.energy)}%</div>`;
+    else A.innerHTML=b('sleep','😴','לישון')+b('pet','✋','ללטף')+`<div style="font-size:12px;color:#8a7a72;font-weight:700;padding:0 4px;max-width:150px">טיפ: לחיצה ארוכה על החתול – הרם אותו וגרור למיטה</div>`;
+  }else if(room==='living'){
+    A.innerHTML=b('yarn','🧶','כדור צמר','-3⚡')+b('laser','🔴','לייזר','משחק')+b('mice','🐭','צייד עכברים','משחק')+b('pet','✋','ללטף')+b('meow','💬','לדבר');
+  }else if(room==='bath'){
+    A.innerHTML=b('brush','🪮','מברשת','גרור על החתול')+b('litter','🧹','לנקות ארגז',S.poop?`💩×${S.poop}`:'נקי ✓',!S.poop)+b('bath','🚿','אמבטיה');
+  }
+  A.querySelectorAll('.act').forEach(x=>x.addEventListener('click',()=>doAction(x.dataset.a)));
+}
+
+/* ================= speech & fx ================= */
+let bubbleT=null,lastSpeak=0;
+function say(text,ms=3200){
+  const bb=$('bubble'),c=$('cat');
+  if(c.style.display==='none') return;
+  const sr=$('scene').getBoundingClientRect(),cr=c.getBoundingClientRect();
+  bb.textContent=text;
+  let x=cr.left+cr.width/2-sr.left; x=Math.max(90,Math.min(sr.width-90,x));
+  bb.style.left=x+'px'; bb.style.top=(cr.top-sr.top+cr.height*.04)+'px';
+  bb.classList.add('show'); clearTimeout(bubbleT); bubbleT=setTimeout(()=>bb.classList.remove('show'),ms); lastSpeak=Date.now();
+}
+function fx(emoji,x,y,n=1,cls='fx'){
+  const sc=$('scene');
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');d.className=cls;d.textContent=emoji;
+    d.style.left=(x+(Math.random()-.5)*40)+'px';d.style.top=(y+(Math.random()-.5)*20)+'px';
+    d.style.setProperty('--dx',((Math.random()-.5)*80)+'px'); d.style.animationDelay=(i*.08)+'s';
+    sc.appendChild(d); setTimeout(()=>d.remove(),2000+i*80);
+  }
+}
+function catPoint(fx_=.6,fy=.25){const sr=$('scene').getBoundingClientRect(),cr=$('cat').getBoundingClientRect();return [cr.left-sr.left+cr.width*fx_,cr.top-sr.top+cr.height*fy];}
+let toastT;
+function toast(t,ms=1800){const e=$('toast');e.innerHTML=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),ms);}
+function anim(cls,ms){const c=$('cat');c.classList.remove(cls);void c.offsetWidth;c.classList.add(cls);if(ms)setTimeout(()=>c.classList.remove(cls),ms);}
+
+/* ================= progression ================= */
+const xpNeed=l=>40+l*30;
+function addXP(n){
+  S.xp+=n;
+  while(S.xp>=xpNeed(S.level)){
+    S.xp-=xpNeed(S.level);S.level++;S.coins+=20;sfx.level();
+    setTimeout(()=>{toast(`🎉 עלית לרמה ${S.level}!<br>+20 🪙`,2600);const [x,y]=catPoint(.5,.2);fx('⭐',x,y,6);},300);
+    const un=Object.values(ACCS).filter(a=>a.lvl===S.level);
+    if(un.length) setTimeout(()=>toast(`נפתח בחנות: ${un.map(a=>a.e).join(' ')}`,2400),3000);
+  }
+  renderStats();
+}
+function addCoins(n){S.coins+=n;S.total.coins+=n;sfx.coin();renderStats();}
+function missionDef(id){return MISSIONS.find(m=>m.id===id);}
+function ensureDay(){
+  const t=todayStr();
+  if(S.day&&S.day.date===t) return;
+  // pick 3 missions deterministically from date
+  let seed=[...t].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7); const pool=MISSIONS.map(m=>m.id); const pick=[];
+  while(pick.length<3){seed=(seed*1103515245+12345)&0x7fffffff;const id=pool.splice(seed%pool.length,1)[0];pick.push(id);}
+  const y=new Date();y.setDate(y.getDate()-1);
+  const yStr=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
+  S.streak = S.lastDay===yStr ? S.streak+1 : 1; S.lastDay=t;
+  S.day={date:t,m:pick.map(id=>({id,p:0,c:false})),bonus:false};
+}
+function track(key,amount=1,isMax=false){
+  ensureDay();
+  for(const m of S.day.m){const d=missionDef(m.id); if(d.key!==key||m.c)continue;
+    const before=m.p; m.p = d.max? Math.max(m.p,amount) : m.p+amount; m.p=Math.min(m.p,d.goal);
+    if(before<d.goal&&m.p>=d.goal){setTimeout(()=>toast(`✅ משימה הושלמה!<br>${d.t(S.name)}`,2200),400);sfx.level();}
+  }
+  // tutorial
+  const tu=TUTORIAL[S.tut];
+  if(tu&&tu.key===key){S.tutProg+=amount; if(S.tutProg>=tu.goal){S.tut++;S.tutProg=0;addCoins(10);addXP(10);setTimeout(()=>toast('🎓 כל הכבוד! +10 🪙'),900);} }
+  renderStats();
+}
+function renderTut(){
+  const tu=TUTORIAL[S.tut],el=$('tut');
+  if(!tu||!S.name){el.style.display='none';return;}
+  el.style.display='block'; el.innerHTML=`<b>משימת פתיחה ${S.tut+1}/${TUTORIAL.length}</b>${tu.t(S.name)}${tu.goal>1?` (${S.tutProg}/${tu.goal})`:''}`;
+}
+
+/* ================= actions ================= */
+let busy=false;
+function doAction(a){
+  ac();
+  if(a.startsWith('food:')) return feed(a.slice(5));
+  switch(a){
+    case 'water': if(room!=='kitchen')return; S.water=100; sfx.pop(); setRoom('kitchen',true); toast('💧 קערת המים מלאה'); track('water'); addXP(2); save(); break;
+    case 'sleep': goSleep(); break;
+    case 'wake': wakeUp(true); break;
+    case 'goBed': setRoom('bedroom'); break;
+    case 'pet': tool=tool==='pet'?null:'pet'; renderActions(); say('העבר אצבע עליי 🥰'); break;
+    case 'brush': tool=tool==='brush'?null:'brush'; renderActions(); if(tool)toast('🪮 העבר את המברשת על הפרווה'); break;
+    case 'yarn': throwYarn(); break;
+    case 'laser': startGame('laser'); break;
+    case 'mice': startGame('mice'); break;
+    case 'meow': talk(); break;
+    case 'litter': cleanLitter(); break;
+    case 'bath': if(busy)return; meow(true); anim('angry',800); say('אמבטיה?! בחיים לא! 🙀'); vibrate(80); setTimeout(()=>{walkTo(.85,()=>walkTo(ROOMS.bath.home));},700); break;
+  }
+}
+function feed(id){
+  if(busy||room!=='kitchen') return;
+  const f=FOODS[id];
+  if(!f.free&&!S.inv[id]){toast('אין במלאי – אפשר לקנות בחנות 🛒');return;}
+  if(S.hunger>=95&&id!=='treat'){say('אני מפוצץ! 😹 אולי אחר כך');anim('wiggle',700);return;}
+  busy=true;
+  if(!f.free)S.inv[id]--;
+  $('bowlFood').textContent=f.e+f.e; sfx.pop();
+  walkTo(ROOMS.kitchen.bowl+.17,()=>{
+    const c=$('cat'); c.classList.add('eat'); say(['יאמי! 😋','נום נום נום','מממ... טעים!'][Math.random()*3|0],2500);
+    let k=0; const iv=setInterval(()=>{sfx.crunch(); if(k++%2===0){const [x,y]=catPoint(.6,.45);fx('✨',x,y);} },350);
+    setTimeout(()=>{
+      clearInterval(iv); c.classList.remove('eat'); $('bowlFood').textContent='';
+      S.hunger=clamp(S.hunger+f.hunger); S.fun=clamp(S.fun+f.fun); S.poopMeter+=f.hunger;
+      if(S.poopMeter>=60){S.poopMeter=0;S.poop=Math.min(3,S.poop+1);}
+      S.total.feed++; track('feed'); if(id==='treat')track('treat');
+      addXP(5); const [x,y]=catPoint(.6,.2); fx('💕',x,y,3); meow();
+      say(S.hunger>=90?'שבע ומאושר 😻':'תודה! עוד? 🥺'); anim('happy',1200);
+      busy=false; renderActions(); save();
+      setTimeout(()=>walkTo(ROOMS.kitchen.home),1500);
+    },2800);
+  });
+}
+function goSleep(){
+  if(busy) return;
+  if(S.energy>=90){say('אני לא עייף! בוא נשחק 😼');anim('wiggle',600);return;}
+  S.sleeping=true; S.sleepStart=Date.now(); S.total.sleep++; track('sleep'); addXP(5);
+  putInBed(false); meow(true); say('לילה טוב... 😴',2000); renderActions(); save();
+}
+function putInBed(instant){
+  const c=$('cat'),bed=$('bed'); if(!bed)return;
+  c.style.left=(ROOMS.bedroom.bed*100)+'%'; c.style.bottom='12%'; c.style.height='44%'; catX=ROOMS.bedroom.bed;
+  c.classList.add('sleep','closed');
+  const bl=$('blanket'); const br=bed.getBoundingClientRect(),sr=$('scene').getBoundingClientRect();
+  bl.innerHTML=blanketSVG(); bl.style.display='block';
+  bl.style.width=(br.width*.86)+'px'; bl.style.left=(br.left-sr.left+br.width*.12)+'px'; bl.style.bottom=(sr.bottom-br.bottom+br.height*.12)+'px';
+  setTimeout(()=>$('dark').classList.add('on'),instant?0:600);
+}
+function wakeUp(manual){
+  S.sleeping=false; const c=$('cat'); c.classList.remove('sleep','closed');
+  $('dark').classList.remove('on'); $('blanket').style.display='none';
+  if(manual&&S.energy<60){S.fun=clamp(S.fun-8);say('למה העירו אותי?! 😾');anim('angry',700);}
+  else{say('בוקר טוב! ☀️ מלא אנרגיה');meow();}
+  c.style.display=''; placeCatHome();
+  renderActions(); renderStats(); save();
+}
+function throwYarn(){
+  if(busy||room!=='living'||S.sleeping) return;
+  if(S.energy<8){say('עייף מדי... 😴');return;}
+  busy=true; const y=$('yarnProp'); const tx=.12+Math.random()*.76;
+  y.style.right='auto'; y.style.left=(tx*100)+'%'; y.style.transform=`translateX(-50%) rotate(${720*(Math.random()>.5?1:-1)}deg)`; y.style.bottom='8%';
+  sfx.swish();
+  setTimeout(()=>walkTo(tx,()=>{anim('happy',1100);meow();
+    S.fun=clamp(S.fun+9);S.energy=clamp(S.energy-3);S.hunger=clamp(S.hunger-1);
+    const [x,yy]=catPoint(.5,.2);fx('🎾',x,yy,1);fx('💕',x,yy,2);
+    track('yarn'); addXP(3); renderStats(); busy=false; save();
+    say(['תפסתי! 😼','עוד פעם!','הכדור שלי!'][Math.random()*3|0]);
+  }),250);
+}
+function talk(){
+  meow(); anim('happy',1200);
+  const lines=[]; if(S.hunger<40)lines.push('אני ממש רעב 🍗'); if(S.energy<35)lines.push('אני עייף... 😴'); if(S.fun<40)lines.push('משעמם לי! בוא נשחק 🧶'); if(S.poop>=2)lines.push('הארגז שלי מלוכלך 🙀'); if(S.water<25)lines.push('אין לי מים! 💧');
+  say(lines.length?lines[0]:HAPPY_LINES[Math.random()*HAPPY_LINES.length|0]);
+}
+function renderPoops(){const p=$('poops');if(p)p.innerHTML=Array.from({length:S.poop},()=>'<span>💩</span>').join('');}
+function cleanLitter(){
+  if(room!=='bath')return;
+  if(!S.poop){toast('הארגז נקי ✨');return;}
+  const n=S.poop; S.poop=0; renderPoops(); addCoins(n); S.clean=clamp(S.clean+5); S.total.litter++; track('litter'); addXP(4);
+  const l=$('litter').getBoundingClientRect(),sr=$('scene').getBoundingClientRect(); fx('✨',l.left-sr.left+l.width/2,l.top-sr.top,4);
+  toast(`🧹 נקי! +${n} 🪙`); say('תודה! עכשיו נעים פה 😺'); renderActions(); save();
+}
+
+/* ---------- touch on cat: pet / brush / pick up ---------- */
+(function(){
+  const c=$('cat'); let down=null,lastX=0,lastY=0,dist=0,lpTimer=null,held=false,strokes=0;
+  c.addEventListener('pointerdown',e=>{
+    ac(); if(busy&&!S.sleeping)return;
+    down={x:e.clientX,y:e.clientY,t:Date.now()}; lastX=e.clientX;lastY=e.clientY;dist=0;
+    c.setPointerCapture(e.pointerId);
+    if(!S.sleeping&&tool!=='brush') lpTimer=setTimeout(()=>{held=true;c.classList.add('held');c.classList.remove('sleep');meow();vibrate(40);say('הופה! 🙀',1200);},420);
+  });
+  c.addEventListener('pointermove',e=>{
+    if(!down)return; const dx=e.clientX-lastX,dy=e.clientY-lastY,d=Math.hypot(dx,dy);
+    if(held){const sr=$('scene').getBoundingClientRect();const x=clamp((e.clientX-sr.left)/sr.width,.08,.92);catX=x;c.style.left=(x*100)+'%';c.style.bottom=clamp((sr.bottom-e.clientY)/sr.height*100-30,2,60)+'%';return;}
+    if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>12){clearTimeout(lpTimer);}
+    dist+=d; lastX=e.clientX;lastY=e.clientY;
+    if(dist>55){dist=0; stroke(e);}
+  });
+  const end=e=>{
+    clearTimeout(lpTimer); if(!down)return;
+    if(held){held=false;c.classList.remove('held');dropCat();}
+    else if(Date.now()-down.t<300&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<10) tapCat();
+    down=null; purr(false); strokes=0;
+  };
+  c.addEventListener('pointerup',end); c.addEventListener('pointercancel',end);
+  function stroke(e){
+    const sr=$('scene').getBoundingClientRect(),x=e.clientX-sr.left,y=e.clientY-sr.top;
+    if(S.sleeping){fx('💤',x,y);return;}
+    strokes++;
+    if(tool==='brush'){
+      fx('✨',x,y); S.clean=clamp(S.clean+1.5); track('brush'); if(strokes%6===0)addXP(1);
+      if(Math.random()<.15)fx('☁️',x,y); if(S.clean>=99&&strokes%8===0)say('אני מבריק! ✨');
+    }else{
+      fx(Math.random()<.7?'💕':'💗',x,y); S.fun=clamp(S.fun+1.2); S.total.pet++; track('pet'); if(strokes%5===0)addXP(1);
+      if(strokes===3){purr(true);say(['פררררר 😽','עוד... 🥰','שם בדיוק!'][Math.random()*3|0]);c.classList.add('closed');setTimeout(()=>c.classList.remove('closed'),1600);}
+      vibrate(8);
+    }
+    renderStats();
+  }
+  function tapCat(){
+    if(S.sleeping){say('Zzz... 💤 (אל תעיר אותי)',1500);return;}
+    meow(S.hunger<30); anim('happy',1100); talk();
+  }
+  function dropCat(){
+    const bed=$('bed');
+    if(room==='bedroom'&&bed){
+      const b=bed.getBoundingClientRect(),cr=c.getBoundingClientRect(),cx=cr.left+cr.width/2,cy=cr.bottom;
+      if(cx>b.left&&cx<b.right&&cy>b.top-60&&cy<b.bottom+40){ if(S.energy>=90){say('אני לא עייף! 😼');} else {goSleep();return;} }
+    }
+    c.style.bottom='6%'; meow(); anim('happy',600);
+  }
+})();
+
+/* ================= mini games ================= */
+let G=null;
+function startGame(type){
+  if(busy||S.sleeping)return;
+  if(S.energy<15){say('אני עייף מדי לשחק... 😴 תשכיב אותי לישון');return;}
+  const g=$('game'),area=$('gArea'); g.classList.add('open'); area.className=type; area.innerHTML='<div id="gHint"></div>';
+  G={type,score:0,time:25,iv:null,raf:null,end:false};
+  $('gTitle').textContent=type==='laser'?'🔴 לייזר':'🐭 צייד עכברים';
+  $('gScore').textContent='⭐ 0'; $('gTime').textContent='⏱ 25';
+  G.iv=setInterval(()=>{G.time--;$('gTime').textContent='⏱ '+G.time;if(G.time<=0)endGame();},1000);
+  if(type==='laser')laserGame(area); else miceGame(area);
+}
+function gScore(n){G.score=Math.max(0,G.score+n);$('gScore').textContent='⭐ '+G.score;}
+function laserGame(area){
+  $('gHint').textContent='גרור את האצבע – תן לחתול לתפוס את הנקודה!';
+  const W=area.clientWidth,H=area.clientHeight;
+  const dot=document.createElement('div');dot.className='laserDot';area.appendChild(dot);
+  const cat=document.createElement('div');cat.className='miniCat';cat.innerHTML='<img src="cat.webp">';area.appendChild(cat);
+  let dx=W*.5,dy=H*.3,cx=W*.5,cy=H*.85,moved=0,cool=0,lx=dx,ly=dy;
+  const mv=e=>{const r=area.getBoundingClientRect();const nx=e.clientX-r.left,ny=e.clientY-r.top;moved+=Math.hypot(nx-lx,ny-ly);lx=nx;ly=ny;dx=nx;dy=ny;};
+  area.onpointerdown=mv; area.onpointermove=e=>{if(e.buttons||e.pointerType==='touch')mv(e);};
+  let lt=performance.now();
+  const step=t=>{ if(G.end)return; const dt=Math.min(50,t-lt);lt=t;
+    const sp=(.16+Math.min(.12,G.score*.008))*dt; const vx=dx-cx,vy=(dy+60)-cy,d=Math.hypot(vx,vy);
+    if(d>4){cx+=vx/d*Math.min(sp,d);cy+=vy/d*Math.min(sp,d);}
+    cat.style.left=cx+'px';cat.style.top=cy+'px';cat.style.transform=`scaleX(${vx>0?-1:1}) rotate(${Math.sin(t/80)*(d>10?6:0)}deg)`;
+    dot.style.left=dx+'px';dot.style.top=dy+'px';
+    if(cool>0)cool-=dt;
+    if(d<40&&cool<=0&&moved>120){gScore(1);moved=0;cool=600;sfx.pop();vibrate(20);
+      const p=document.createElement('div');p.className='fx';p.textContent='💥';p.style.left=dx+'px';p.style.top=dy+'px';area.appendChild(p);setTimeout(()=>p.remove(),1400);}
+    G.raf=requestAnimationFrame(step);};
+  G.raf=requestAnimationFrame(step);
+}
+function miceGame(area){
+  $('gHint').textContent='הקש על העכברים 🐭 – לא על הכלב 🐶!';
+  const holes=[];
+  for(let i=0;i<9;i++){const h=document.createElement('div');h.className='hole';h.style.left=(5+(i%3)*32)+'%';h.style.top=(12+Math.floor(i/3)*27)+'%';
+    const m=document.createElement('div');m.className='mouse';h.appendChild(m);area.appendChild(h);holes.push(m);
+    h.addEventListener('pointerdown',()=>{if(!m.classList.contains('up')||m.dataset.hit)return;m.dataset.hit=1;m.classList.add('hit');
+      const k=m.dataset.k; if(k==='dog'){gScore(-2);sfx.bad();vibrate(120);}else{gScore(k==='cheese'?2:1);sfx.pop();vibrate(15);}
+      setTimeout(()=>m.classList.remove('up'),120);});}
+  const spawn=()=>{ if(G.end)return;
+    const free=holes.filter(m=>!m.classList.contains('up')); if(free.length){const m=free[Math.random()*free.length|0];
+      const r=Math.random(); m.dataset.k=r<.12?'dog':r<.25?'cheese':'mouse'; m.textContent=m.dataset.k==='dog'?'🐶':m.dataset.k==='cheese'?'🐀':'🐭';
+      delete m.dataset.hit; m.classList.remove('hit'); m.classList.add('up'); const life=Math.max(550,1100-G.score*25);
+      setTimeout(()=>m.classList.remove('up'),life);}
+    G.raf=setTimeout(spawn,Math.max(380,750-G.score*15));};
+  spawn();
+}
+function endGame(quit){
+  if(!G||G.end)return; G.end=true; clearInterval(G.iv); cancelAnimationFrame(G.raf); clearTimeout(G.raf);
+  const type=G.type,score=G.score; $('game').classList.remove('open'); G=null;
+  if(quit) return;
+  const coins=Math.max(2,score);
+  S.fun=clamp(S.fun+18+Math.min(12,score)); S.energy=clamp(S.energy-12); S.hunger=clamp(S.hunger-6);
+  S.total.games++; track('games'); if(type==='laser'){track('laser');S.bestLaser=Math.max(S.bestLaser,score);} else {track('miceBest',score,true);S.bestMice=Math.max(S.bestMice,score);}
+  addCoins(coins); addXP(8+score);
+  openModal(`<div style="text-align:center"><div style="font-size:56px">${score>=10?'🏆':score>=5?'😸':'🙂'}</div>
+    <h2 style="justify-content:center">כל הכבוד!</h2><div style="font-size:18px;font-weight:700;margin-bottom:6px">ניקוד: ${score}</div>
+    <div style="font-weight:700;color:#8a7a72">+${coins} 🪙 &nbsp; +שמחה 🎾 &nbsp; -אנרגיה ⚡</div>
+    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn" onclick="closeModal();startGame('${type}')">שוב! 🔁</button><button class="btn gray" onclick="closeModal()">סיום</button></div></div>`,true);
+  anim('happy',1200); meow(); save();
+}
+
+/* ================= modals ================= */
+function openModal(html,center){const m=$('modal');m.className='modal open'+(center?' center':'');$('sheet').innerHTML=html;}
+function closeModal(){$('modal').className='modal';}
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal'&&S.name)closeModal();});
+
+function openMissions(){
+  ensureDay();
+  const n=S.name; let h=`<h2>📋 משימות היום <button class="x" onclick="closeModal()">✕</button></h2>
+   <div style="font-weight:700;color:#8a7a72;margin-bottom:10px">🔥 רצף ימים: ${S.streak} &nbsp;•&nbsp; משימות חדשות כל יום</div>`;
+  for(const m of S.day.m){const d=missionDef(m.id),pct=Math.min(100,m.p/d.goal*100),ok=m.p>=d.goal;
+    h+=`<div class="mission"><div class="e">${d.e}</div><div class="t">${d.t(n)}<div class="p"><i style="width:${pct}%"></i></div><div class="r">${m.p}/${d.goal} • פרס ${d.coins} 🪙</div></div>
+      ${m.c?'<span class="done">✓ נאסף</span>':ok?`<button class="btn small" onclick="claim('${m.id}')">אסוף!</button>`:''}</div>`;}
+  const all=S.day.m.every(m=>m.c);
+  h+=`<div class="mission" style="background:#fff4d6"><div class="e">🎁</div><div class="t">בונוס יומי – כניסה ${S.streak} ברצף<div class="r">${10+S.streak*2} 🪙</div></div>${S.day.bonus?'<span class="done">✓ נאסף</span>':`<button class="btn small" onclick="claimBonus()">אסוף!</button>`}</div>`;
+  if(all) h+=`<div style="text-align:center;font-weight:800;color:#4caf50;margin-top:6px">כל המשימות הושלמו! ${n} גאה בך 😻</div>`;
+  h+=`<div class="sub">🏅 הישגים</div><div class="statsList">
+    <div><span>🍽️ ארוחות</span><span>${S.total.feed}</span></div><div><span>💕 ליטופים</span><span>${S.total.pet}</span></div>
+    <div><span>🎮 משחקים</span><span>${S.total.games}</span></div><div><span>🐭 שיא עכברים</span><span>${S.bestMice}</span></div>
+    <div><span>🔴 שיא לייזר</span><span>${S.bestLaser}</span></div></div>`;
+  openModal(h);
+}
+function claim(id){const m=S.day.m.find(x=>x.id===id),d=missionDef(id);if(!m||m.c||m.p<d.goal)return;m.c=true;addCoins(d.coins);addXP(15);confetti();save();openMissions();}
+function claimBonus(){if(S.day.bonus)return;S.day.bonus=true;addCoins(10+S.streak*2);addXP(5);confetti();track('mission');save();openMissions();}
+function confetti(){const sr=$('scene').getBoundingClientRect();for(let i=0;i<14;i++)setTimeout(()=>fx(['🎉','⭐','🪙','✨'][i%4],Math.random()*sr.width,sr.height*.6),i*40);}
+
+function openShop(tab='food'){
+  let h=`<h2>🛒 החנות <span class="pill">🪙 ${S.coins}</span><button class="x" onclick="closeModal()">✕</button></h2>
+    <div class="row"><button class="btn small ${tab==='food'?'':'gray'}" style="flex:1" onclick="openShop('food')">🍗 אוכל</button><button class="btn small ${tab==='acc'?'':'gray'}" style="flex:1" onclick="openShop('acc')">🎀 אביזרים</button></div><div class="grid">`;
+  if(tab==='food'){
+    for(const [id,f] of Object.entries(FOODS)){ if(f.free)continue;
+      h+=`<div class="item"><div class="e">${f.e}</div>${f.name}<div style="font-size:11px;color:#8a7a72">+${f.hunger} שובע${f.fun?` · +${f.fun} שמחה`:''}<br>במלאי: ${S.inv[id]||0}</div><button class="btn small" onclick="buy('${id}')" ${S.coins<f.price?'disabled style="opacity:.5"':''}>${f.price} 🪙</button></div>`;}
+  }else{
+    for(const [id,a] of Object.entries(ACCS)){ const own=S.owned.includes(id),lock=S.level<a.lvl;
+      h+=`<div class="item"><div class="e">${a.e}</div>${a.name}<br>${lock?`<button class="btn small gray">🔒 רמה ${a.lvl}</button>`:own?`<button class="btn small ${S.acc===id?'gray':''}" onclick="wear('${id}')">${S.acc===id?'להוריד':'ללבוש'}</button>`:`<button class="btn small" onclick="buyAcc('${id}')" ${S.coins<a.price?'disabled style="opacity:.5"':''}>${a.price} 🪙</button>`}</div>`;}
+  }
+  openModal(h+'</div><div style="font-size:12px;color:#8a7a72;margin-top:12px;text-align:center">מרוויחים מטבעות ממשימות, משחקים וניקיון 🪙</div>');
+}
+function buy(id){const f=FOODS[id];if(S.coins<f.price)return;S.coins-=f.price;S.inv[id]=(S.inv[id]||0)+1;sfx.coin();save();renderStats();renderActions();openShop('food');}
+function buyAcc(id){const a=ACCS[id];if(S.coins<a.price||S.level<a.lvl)return;S.coins-=a.price;S.owned.push(id);S.acc=id;renderAcc();sfx.level();save();renderStats();openShop('acc');setTimeout(()=>say('איך אני נראה? 😎'),300);}
+function wear(id){S.acc=S.acc===id?null:id;renderAcc();save();openShop('acc');}
+
+function openMenu(){
+  const days=Math.max(1,Math.ceil((Date.now()-S.created)/864e5));
+  openModal(`<h2>⚙️ ${S.name} <button class="x" onclick="closeModal()">✕</button></h2>
+    <img class="photo" src="face.jpg">
+    <div class="statsList" style="margin-top:10px"><div><span>📅 ימים יחד</span><span>${days}</span></div><div><span>⭐ רמה</span><span>${S.level}</span></div><div><span>🪙 מטבעות שהרווחת</span><span>${S.total.coins}</span></div></div>
+    <div class="row"><span style="font-weight:700">🔊 צלילים</span><button class="btn small ${S.sound?'':'gray'}" onclick="S.sound=!S.sound;save();purr(false);openMenu()">${S.sound?'פועל':'כבוי'}</button></div>
+    <div class="row"><span style="font-weight:700">✏️ שינוי שם</span><button class="btn small" onclick="askName()">שנה</button></div>
+    <div class="row"><span style="font-weight:700;color:#e53935">🔄 התחלה מחדש</span><button class="btn small gray" onclick="if(confirm('למחוק את כל ההתקדמות?')){localStorage.removeItem(KEY);location.reload();}">אפס</button></div>`);
+}
+function askName(){
+  openModal(`<div style="text-align:center"><img src="face.jpg" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:5px solid #ffb36b"><h2 style="justify-content:center">${S.name?'שם חדש':'ברוך הבא הביתה! 🏡'}</h2>
+    <div style="font-weight:600;color:#8a7a72;margin-bottom:12px">${S.name?'':'החתול החדש שלך עבר לגור איתך. תדאג שיהיה שבע, נקי, שמח וישן טוב!'}</div>
+    <input type="text" id="nameIn" maxlength="14" placeholder="איך קוראים לו?" value="${S.name||''}">
+    <button class="btn" style="width:100%;margin-top:12px" onclick="setName()">${S.name?'שמור':'בוא נתחיל! 🐾'}</button></div>`,true);
+  setTimeout(()=>$('nameIn').focus(),200);
+}
+function setName(){const v=$('nameIn').value.trim();if(!v){$('nameIn').style.borderColor='#e53935';return;}const first=!S.name;S.name=v;closeModal();save();renderStats();if(first){setRoom('kitchen');setTimeout(()=>{meow();say(`מיאו! אני ${v} ואני רעב 🍗`,4000);},500);}}
+
+/* ================= back button (called from Android) ================= */
+window.handleBack=function(){
+  if(G){endGame(true);return true;}
+  if($('modal').classList.contains('open')&&S.name){closeModal();return true;}
+  if(tool){tool=null;renderActions();return true;}
+  return false;
+};
+
+/* ================= main loop ================= */
+function simulate(sec){
+  // offline / elapsed progression; stats never drop below a floor – the cat never dies
+  const h=sec/3600;
+  if(S.sleeping){
+    S.energy=clamp(S.energy+SLEEP_GAIN*sec); S.hunger=clamp(S.hunger-RATE.hunger/2*h,3);
+    if(S.energy>=100)S.sleeping=false;
+  }else{
+    S.hunger=clamp(S.hunger-RATE.hunger*h,3); S.energy=clamp(S.energy-RATE.energy*h*(isNight()?1.6:1),3);
+    S.fun=clamp(S.fun-RATE.fun*h*(S.hunger<20?1.5:1),3);
+  }
+  S.clean=clamp(S.clean-RATE.clean*h*(S.poop>=2?2:1),3);
+  S.water=clamp(S.water-10*h,0);
+  S.poopMeter+=sec/3600*6; if(S.poopMeter>=60){S.poopMeter=0;S.poop=Math.min(3,S.poop+1);}
+}
+let lastTick=Date.now(),saveCount=0,blinkT=0;
+function tick(){
+  const now=Date.now(),sec=(now-lastTick)/1000; lastTick=now;
+  const wasSleeping=S.sleeping; simulate(sec);
+  if(wasSleeping&&!S.sleeping)wakeUp(false);
+  if(S.sleeping&&room==='bedroom'){
+    if(Math.random()<.5){const [x,y]=catPoint(.75,.12);const z=document.createElement('div');z.className='zzz';z.textContent='Z';z.style.fontSize=(14+Math.random()*12)+'px';z.style.left=x+'px';z.style.top=y+'px';$('scene').appendChild(z);setTimeout(()=>z.remove(),2500);}
+    if(Math.random()<.2)renderActions();
+  }
+  if(S.hunger>80&&S.energy>80&&S.fun>80&&S.clean>80)track('allgood');
+  renderStats();
+  // idle chatter: needs first
+  if(!busy&&!G&&!S.sleeping&&S.name&&now-lastSpeak>14000&&!$('modal').classList.contains('open')){
+    if(S.hunger<30){say('אני רעב! 🍗 מיאו!');meow(true);}
+    else if(S.energy<25)say('אני עייף... 😴 תשכיב אותי לישון?');
+    else if(S.poop>=2)say('הארגז מלוכלך! 🙀');
+    else if(S.fun<30)say('משעמם לי! בוא נשחק 🧶');
+    else if(S.water<20)say('נגמרו לי המים 💧');
+    else if(Math.random()<.4)say(HAPPY_LINES[Math.random()*HAPPY_LINES.length|0]);
+    else lastSpeak=now-7000;
+  }
+  // blinking
+  if(!S.sleeping&&--blinkT<=0){blinkT=3+Math.random()*4|0;const c=$('cat');c.classList.add('blink');setTimeout(()=>c.classList.remove('blink'),160);}
+  if(++saveCount%5===0)save();
+}
+
+/* ================= boot ================= */
+load();
+{ // catch up on time passed while the app was closed
+  const away=(Date.now()-S.last)/1000;
+  if(away>5) simulate(away);
+}
+ensureDay();
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setRoom(t.dataset.room)));
+$('missionsBtn').onclick=()=>{ac();openMissions();};
+$('shopBtn').onclick=()=>{ac();openShop();};
+$('coinsBtn').onclick=()=>{ac();openShop();};
+$('menuBtn').onclick=()=>{ac();openMenu();};
+$('avatar').onclick=()=>{ac();openMenu();};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){purr(false);save();}else{lastTick=Date.now();const away=(Date.now()-S.last)/1000;if(away>2){simulate(away);}renderStats();}});
+window.addEventListener('resize',()=>{sizeCat();if(S.sleeping&&room==='bedroom')putInBed(true);});
+setRoom(S.room||'kitchen',true);
+renderAcc(); renderStats();
+setInterval(tick,1000);
+if(!S.name) askName();
+else setTimeout(()=>{ if(S.sleeping) toast(`💤 ${S.name} ישן בחדר השינה`); else talk(); },700);
+window.addEventListener('load',sizeCat);
+</script>
+</body>
+</html>
