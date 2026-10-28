@@ -299,14 +299,16 @@ const KEY='catgame.v1';
 let S;
 function fresh(){
   const now=Date.now();
-  return {v:2,name:'',created:now,last:now,hunger:45,energy:80,fun:70,clean:85,social:60,
+  return {v:3,name:'אוליבר',welcomed:false,created:now,last:now,hunger:45,energy:80,fun:70,clean:85,social:60,
     coins:40,xp:0,level:1,poop:0,poopMeter:0,water:60,sleeping:false,acc:null,owned:[],upg:[],
     inv:{wet:2,tuna:1,treat:2,milk:1,salmon:0},sound:true,room:'kitchen',recent:{},
     total:{feed:0,pet:0,games:0,sleep:0,litter:0,coins:0},
     day:null,tut:0,tutProg:0,streak:0,lastDay:null,bestMice:0,bestLaser:0};
 }
 function load(){
-  try{const raw=localStorage.getItem(KEY); if(raw){const o=JSON.parse(raw);S=Object.assign(fresh(),o);S.inv=Object.assign(fresh().inv,o.inv);S.v=2;return;}}catch(e){}
+  try{const raw=localStorage.getItem(KEY); if(raw){const o=JSON.parse(raw);S=Object.assign(fresh(),o);S.inv=Object.assign(fresh().inv,o.inv);
+    if((o.v||1)<3){S.name='אוליבר';S.welcomed=true;} // the cat is called Oliver
+    S.v=3;return;}}catch(e){}
   S=fresh();
 }
 function save(){
@@ -326,7 +328,7 @@ const mark=k=>{S.recent[k]=Date.now();};
 /* ================= android bridge ================= */
 const NATIVE=window.Android||null;
 function scheduleNotify(){
-  if(!NATIVE||!S.name) return;
+  if(!NATIVE||!S.welcomed) return;
   try{
     const perH=S.sleeping?RATE.hunger/2:RATE.hunger;
     const secs=S.hunger>30?(S.hunger-30)/perH*3600:3*3600;
@@ -842,7 +844,7 @@ function track(key,amount=1){
 }
 function renderTut(){
   const tu=TUTORIAL[S.tut],el=$('tut');
-  if(!tu||!S.name){el.style.display='none';return;}
+  if(!tu||!S.welcomed){el.style.display='none';return;}
   el.style.display='block';el.innerHTML=`<b>משימת פתיחה ${S.tut+1}/${TUTORIAL.length}</b>${tu.t(S.name)}${tu.goal>1?` (${S.tutProg}/${tu.goal})`:''}`;
 }
 
@@ -1164,7 +1166,7 @@ function endGame(quit){
 /* ================= modals ================= */
 function openModal(html,center){const m=$('modal');m.className='modal open'+(center?' center':'');$('sheet').innerHTML=html;}
 function closeModal(){$('modal').className='modal';}
-$('modal').addEventListener('click',e=>{if(e.target.id==='modal'&&S.name)closeModal();});
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal'&&S.welcomed)closeModal();});
 
 function openMissions(){
   ensureDay();const n=S.name;
@@ -1219,20 +1221,20 @@ function openMenu(){
     <div class="muted" style="margin-top:8px">טיפ: הקש על חפצים בחדר ועל החתול כדי לפתוח תפריט פעולות. העבר אצבע על החתול כדי ללטף, ולחיצה ארוכה מרימה אותו.</div>`);
 }
 function askName(){
-  openModal(`<div style="text-align:center"><img src="face.jpg" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:4px solid var(--gold);box-shadow:0 0 24px #5ee05a88"><h2 style="justify-content:center">${S.name?'שם חדש':'ברוך הבא לאחוזה 🏰'}</h2>
-    <div class="muted" style="margin-bottom:12px">${S.name?'':'החתול שלך עבר לגור בבית חדש ויוקרתי. תדאג לכל הצרכים שלו – אוכל, שינה, כיף, ניקיון ואהבה.'}</div>
+  openModal(`<div style="text-align:center"><img src="face.jpg" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:4px solid var(--gold);box-shadow:0 0 24px #5ee05a88"><h2 style="justify-content:center">${S.welcomed?'שם חדש':'ברוך הבא לאחוזה 🏰'}</h2>
+    <div class="muted" style="margin-bottom:12px">${S.welcomed?'':'החתול שלך עבר לגור בבית חדש ויוקרתי. תדאג לכל הצרכים שלו – אוכל, שינה, כיף, ניקיון ואהבה.'}</div>
     <input type="text" id="nameIn" maxlength="14" placeholder="איך קוראים לו?" value="${S.name||''}">
-    <button class="btn" style="width:100%;margin-top:12px" onclick="setName()">${S.name?'שמור':'בוא נתחיל 🐾'}</button></div>`,true);
+    <button class="btn" style="width:100%;margin-top:12px" onclick="setName()">${S.welcomed?'שמור':'בוא נתחיל 🐾'}</button></div>`,true);
   setTimeout(()=>$('nameIn').focus(),200);
 }
-function setName(){const v=$('nameIn').value.trim();if(!v){$('nameIn').style.borderColor='#ff4d4d';return;}const first=!S.name;S.name=v;closeModal();save();renderStats();
+function setName(){const v=$('nameIn').value.trim();if(!v){$('nameIn').style.borderColor='#ff4d4d';return;}const first=!S.welcomed;S.name=v;S.welcomed=true;closeModal();save();renderStats();
   if(first){setRoom('kitchen');setTimeout(()=>{meow();think('🍗',`מיאו! אני ${v} ואני רעב`);},500);setTimeout(()=>toast('💡 הקש על חפצים ועל החתול כדי לבחור פעולה',3500),4400);}}
 
 /* ================= back button (called from Android) ================= */
 window.handleBack=function(){
   if(G){endGame(true);return true;}
   if($('pie').classList.contains('open')){closePie();return true;}
-  if($('modal').classList.contains('open')&&S.name){closeModal();return true;}
+  if($('modal').classList.contains('open')&&S.welcomed){closeModal();return true;}
   return false;
 };
 
@@ -1262,7 +1264,7 @@ function tick(){
   if(S.hunger>80&&S.energy>80&&S.fun>80&&S.clean>80)track('allgood');
   renderStats();
   if(++hintCount%10===0)renderHints();
-  if(!busy&&!G&&!S.sleeping&&S.name&&now-lastSpeak>15000&&!$('modal').classList.contains('open')&&!$('pie').classList.contains('open')){
+  if(!busy&&!G&&!S.sleeping&&S.welcomed&&now-lastSpeak>15000&&!$('modal').classList.contains('open')&&!$('pie').classList.contains('open')){
     if(S.hunger<30){think('🍗','אני רעב! מיאו!');meow(true);}
     else if(S.energy<25)think('🛏️','אני עייף... תשכיב אותי לישון?');
     else if(S.poop>=2)think('🤢','הארגז מלוכלך!');
@@ -1292,7 +1294,7 @@ layoutStage();
 setRoom(S.room||'kitchen',true);
 renderAcc();renderStats();
 setInterval(tick,1000);
-if(!S.name)askName();
+if(!S.welcomed)askName();
 else setTimeout(()=>{if(S.sleeping)toast(`💤 ${S.name} ישן בחדר השינה`);else talk();},700);
 document.fonts&&document.fonts.ready.then(()=>{layoutStage();renderStats();});
 </script>
