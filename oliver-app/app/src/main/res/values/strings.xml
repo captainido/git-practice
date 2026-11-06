@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">אוליבר</string>
+    <string name="mood_waiting">אוליבר מחכה לליטוף…</string>
+    <string name="mood_content">אוליבר נהנה 😊</string>
+    <string name="mood_purring">אוליבר מגרגר 😻</string>
+    <string name="mood_annoyed">אוליבר מתעצבן 😾</string>
+    <string name="mood_angry">אוליבר כועס! 🙀</string>
+    <string name="mood_warning">אוליבר מתחיל להתעייף מזה…</string>
+    <string name="mood_away">אוליבר נעלב והלך… יחזור עוד רגע 😾</string>
+    <string name="hint">לטף את אוליבר עם האצבע. ליטוף איטי = גרגור 💗</string>
+    <string name="btn_record">🎙 הקלטות</string>
+    <string name="btn_vibe_on">📳 רטט: פועל</string>
+    <string name="btn_vibe_off">📴 רטט: כבוי</string>
+
+    <string name="rec_title">הקולות של אוליבר</string>
+    <string name="rec_explain">הקלט את אוליבר האמיתי (עד 10 שניות לכל הקלטה). אם יש הקלטות בקטגוריה – האפליקציה תשתמש בהן במקום הצליל המובנה, ותבחר אחת באקראי בכל פעם.</string>
+    <string name="cat_happy">מיאו שמח</string>
+    <string name="cat_mrrp">"מררפ?" קצר</string>
+    <string name="cat_annoyed">מיאו עצבני</string>
+    <string name="cat_purr">גרגור</string>
+    <string name="cat_hiss">נשיפה (חחח)</string>
+    <string name="rec_start">⏺ הקלט</string>
+    <string name="rec_stop">⏹ עצור</string>
+    <string name="rec_play">▶</string>
+    <string name="rec_delete">🗑</string>
+    <string name="rec_default">משתמש בצליל המובנה</string>
+    <string name="rec_count">%1$d הקלטות</string>
+    <string name="rec_item">הקלטה %1$d</string>
+    <string name="rec_need_permission">צריך הרשאת מיקרופון כדי להקליט</string>
+    <string name="rec_failed">ההקלטה נכשלה</string>
+    <string name="back">→ חזרה לאוליבר</string>
+</resources>
