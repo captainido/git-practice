@@ -7,6 +7,7 @@
     <string name="mood_annoyed">אוליבר מתעצבן 😾</string>
     <string name="mood_angry">אוליבר כועס! 🙀</string>
     <string name="mood_warning">אוליבר מתחיל להתעייף מזה…</string>
+    <string name="away_line">הלך להתפנק לבד. עוד רגע חוזר…</string>
     <string name="mood_away">אוליבר נעלב והלך… יחזור עוד רגע 😾</string>
     <string name="hint">לטף את אוליבר עם האצבע. ליטוף איטי = גרגור 💗</string>
     <string name="btn_record">🎙 הקלטות</string>

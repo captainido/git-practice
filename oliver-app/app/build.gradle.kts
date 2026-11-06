@@ -42,6 +42,19 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.maxHeapSize = "3g"
+            it.systemProperty("robolectric.graphicsMode", "NATIVE")
+            it.systemProperty("oliver.frames", rootProject.file("build/session").absolutePath)
+            // Optional: -ProboDir=/path with pre-downloaded android-all jars (offline Robolectric)
+            (project.findProperty("roboDir") as String?)?.let { dir ->
+                it.systemProperty("robolectric.offline", "true")
+                it.systemProperty("robolectric.dependency.dir", dir)
+            }
+        }
+    }
     lint {
         abortOnError = true
         checkReleaseBuilds = false
@@ -50,4 +63,5 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
 }

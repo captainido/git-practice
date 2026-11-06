@@ -75,6 +75,7 @@ class PettingEngine(private val rnd: Random = Random.Default) {
         when (zone) {
             Zone.TAIL -> {
                 annoyance = min(1f, annoyance + 0.45f)
+                purrLevel *= 0.3f
                 pleasure = max(0f, pleasure - 0.35f)
                 ev += CatEvent.TAIL_SWISH
                 ev += if (annoyance >= 0.95f) CatEvent.HISS else CatEvent.ANNOYED_MEOW
@@ -182,8 +183,9 @@ class PettingEngine(private val rnd: Random = Random.Default) {
             return ev
         }
 
-        val target = if (pleasure > PURR_THRESHOLD && annoyance < 0.3f)
+        var target = if (pleasure > PURR_THRESHOLD && annoyance < 0.3f)
             ((pleasure - PURR_THRESHOLD) / (1f - PURR_THRESHOLD)).coerceIn(0.15f, 1f) else 0f
+        if (warned) target = min(target, 0.3f)      // fed up: the purr fades before he leaves
         val k = if (target > purrLevel) 1.5f else 0.8f
         purrLevel += (target - purrLevel) * min(1f, s * k)
         if (purrLevel < 0.02f && target == 0f) purrLevel = 0f

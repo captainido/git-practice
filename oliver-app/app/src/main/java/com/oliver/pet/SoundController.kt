@@ -49,7 +49,7 @@ class SoundController(private val ctx: Context) {
                 setAudioAttributes(attrs); setDataSource(recs.random().absolutePath); prepare()
             } else MediaPlayer.create(ctx, R.raw.purr, attrs, android.media.AudioManager.AUDIO_SESSION_ID_GENERATE)
         } catch (e: Exception) {
-            MediaPlayer.create(ctx, R.raw.purr)
+            runCatching { MediaPlayer.create(ctx, R.raw.purr) }.getOrNull()
         }
         purr?.isLooping = true
         purr?.setVolume(0f, 0f)
@@ -57,7 +57,7 @@ class SoundController(private val ctx: Context) {
 
     /** Play a voice line. Meows don't overlap each other (a cat has one mouth). */
     fun play(c: SoundCategory, force: Boolean = false) {
-        val now = System.currentTimeMillis()
+        val now = android.os.SystemClock.uptimeMillis()
         if (!force && now - lastVoiceAt < 450) return
         lastVoiceAt = now
         val list = ids[c] ?: return
@@ -74,7 +74,7 @@ class SoundController(private val ctx: Context) {
         purrVol = v
         if (v > 0.01f) {
             if (!p.isPlaying) p.start()
-            val duck = if (System.currentTimeMillis() - lastVoiceAt < 900) 0.3f else 1f
+            val duck = if (android.os.SystemClock.uptimeMillis() - lastVoiceAt < 900) 0.3f else 1f
             p.setVolume(v * duck, v * duck)
         } else if (p.isPlaying) {
             p.pause()

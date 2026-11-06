@@ -153,12 +153,17 @@ class CatView(context: Context) : View(context) {
         Color.rgb((Color.red(c) * (1 - f)).toInt(), (Color.green(c) * (1 - f)).toInt(), (Color.blue(c) * (1 - f)).toInt())
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        scale = min(w / bw, h / bh)
-        ox = (w - bw * scale) / 2f
-        oy = (h - bh * scale) / 2f
-        val s = max(w / bw, h / bh)
-        cover.set((w - bw * s) / 2f, (h - bh * s) / 2f, (w + bw * s) / 2f, (h + bh * s) / 2f)
+        // Zoom so Oliver himself (not the couch) fills the screen, while the photo still covers it.
+        val cover = max(w / bw, h / bh)
+        val fit = min(w / (FOCUS_W * rs), h / (FOCUS_H * rs))
+        scale = max(cover, fit)
+        ox = (w / 2f - FOCUS_CX * rs * scale).coerceIn(w - bw * scale, 0f)
+        oy = (h * 0.47f - FOCUS_CY * rs * scale).coerceIn(h - bh * scale, 0f)
+        this.cover.set((w - bw * cover) / 2f, (h - bh * cover) / 2f, (w + bw * cover) / 2f, (h + bh * cover) / 2f)
     }
+
+    /** Screen position of a point given in reference-image pixels (undeformed). */
+    fun refToScreen(rx: Float, ry: Float) = Pair(ox + rx * rs * scale, oy + ry * rs * scale)
 
     fun setPaused(p: Boolean) {
         paused = p
@@ -204,10 +209,10 @@ class CatView(context: Context) : View(context) {
                     }
                 }
                 eyesHeld = zone == Zone.EYES
-                if (zone.isPleasant && engine.purrLevel > 0.15f && now - lastHeartT > 260 && dist > 1f) {
+                if (zone.isPleasant && engine.purrLevel > 0.15f && engine.mood == Mood.PURRING && now - lastHeartT > 380 && dist > 1f) {
                     lastHeartT = now
                     particles += Particle(bx, by - 30f * rs, -(90f + rnd.nextFloat() * 60f), 1f,
-                        if (rnd.nextInt(4) == 0) "💕" else "💗", 26f + rnd.nextFloat() * 14f)
+                        if (rnd.nextInt(4) == 0) "💕" else "💗", 18f + rnd.nextFloat() * 10f)
                 }
                 touchX = bx; touchY = by
                 lastMoveT = now
@@ -245,7 +250,11 @@ class CatView(context: Context) : View(context) {
     // =========================================================================================
     // Events → sound / vibration / animation
     // =========================================================================================
+    /** Observer for every behavior event (used by tests / debugging). */
+    var onCatEvent: ((CatEvent) -> Unit)? = null
+
     private fun handle(events: List<CatEvent>) {
+        for (ev in events) onCatEvent?.invoke(ev)
         for (ev in events) when (ev) {
             CatEvent.MRRP -> { sound?.play(SoundCategory.MRRP); haptics?.mrrp(); earAmp = max(earAmp, 0.5f) }
             CatEvent.HAPPY_MEOW -> sound?.play(SoundCategory.HAPPY)
@@ -350,12 +359,13 @@ class CatView(context: Context) : View(context) {
         canvas.drawBitmap(bgBlur, null, cover, bgPaint)
         canvas.drawRect(rect, dim)
 
-        canvas.save()
-        canvas.translate(awayAnim * width * 0.25f, 0f)
-        meshPaint.alpha = (255 * (1f - awayAnim * 0.85f)).toInt()
+        // drawBitmapMesh ignores paint alpha, so fade through an offscreen layer instead.
+        val alpha = (255 * (1f - awayAnim * 0.9f)).toInt()
+        val layer = if (alpha < 255) canvas.saveLayerAlpha(0f, 0f, width.toFloat(), height.toFloat(), alpha) else -1
         canvas.drawBitmapMesh(photo, mw, mh, verts, 0, null, 0, meshPaint)
         if (awayAnim < 0.5f) drawEyes(canvas, now, purr)
-        canvas.restore()
+        if (layer >= 0) canvas.restoreToCount(layer)
+        if (awayAnim > 0.05f) drawAway(canvas, now)
 
         drawParticles(canvas, dt)
         drawOverlay(canvas, dt)
@@ -367,6 +377,11 @@ class CatView(context: Context) : View(context) {
 
     private companion object {
         val HEAD_ZONES = setOf(Zone.FOREHEAD, Zone.CHEEKS, Zone.CHIN, Zone.EARS)
+        // The part of the photo that must stay on screen: Oliver from ears to paws, tail included.
+        const val FOCUS_CX = 445f
+        const val FOCUS_CY = 850f
+        const val FOCUS_W = 770f
+        const val FOCUS_H = 1040f
     }
 
     /** Screen position of a reference point after mesh deformation (nearest-vertex). */
@@ -439,7 +454,7 @@ class CatView(context: Context) : View(context) {
             canvas.scale(1f, ry / rx, cx, cy)
             featherPaint.shader = RadialGradient(cx, cy, rx, intArrayOf(Color.BLACK, Color.BLACK, Color.TRANSPARENT),
                 floatArrayOf(0f, 0.82f, 1f), Shader.TileMode.CLAMP)
-            canvas.drawCircle(cx, cy, rx + 1, featherPaint)
+            canvas.drawRect(cx - rx * 4, cy - rx * 4, cx + rx * 4, cy + rx * 4, featherPaint)
             canvas.restore()
             canvas.restoreToCount(layer)
         }
@@ -448,6 +463,31 @@ class CatView(context: Context) : View(context) {
     private val srcRect = Rect()
     private val dstRect = Rect()
     private val featherPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN) }
+
+    private fun drawAway(canvas: Canvas, now: Long) {
+        val d = resources.displayMetrics.density
+        val a = (255 * awayAnim).toInt().coerceIn(0, 255)
+        val cx = width / 2f; val cy = height * 0.45f
+        textPaint.color = Color.WHITE
+        textPaint.alpha = a
+        textPaint.textSize = 72f * d
+        canvas.drawText("🐾", cx, cy, textPaint)
+        val left = ((engine.awayUntil - now) / 1000f).coerceAtLeast(0f)
+        if (engine.isAway) {
+            awayRing.alpha = a
+            awayRing.strokeWidth = 5f * d
+            val r = 70f * d
+            rect.set(cx - r, cy - 24f * d - r, cx + r, cy - 24f * d + r)
+            canvas.drawArc(rect, -90f, 360f * (left / 12f).coerceAtMost(1f), false, awayRing)
+        }
+        textPaint.textSize = 20f * d
+        canvas.drawText(context.getString(R.string.away_line), cx, cy + 90f * d, textPaint)
+        textPaint.alpha = 255
+    }
+
+    private val awayRing = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; color = Color.rgb(255, 150, 190); strokeCap = Paint.Cap.ROUND
+    }
 
     private fun drawParticles(canvas: Canvas, dt: Float) {
         val d = resources.displayMetrics.density
@@ -486,7 +526,7 @@ class CatView(context: Context) : View(context) {
             textPaint.color = Color.WHITE
             textPaint.alpha = 255
         }
-        if (engine.purrLevel > 0.3f && !engine.isAway) {
+        if (engine.purrLevel > 0.3f && engine.mood == Mood.PURRING) {
             mapRef(470f, 860f, tmp)
             textPaint.textSize = 18f * d
             textPaint.alpha = (200 * engine.purrLevel).toInt()
